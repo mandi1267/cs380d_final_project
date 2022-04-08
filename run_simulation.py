@@ -72,7 +72,7 @@ def runSimulation(superConfig):
     # Create nodes and make network
     networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultValue,
                                     consensusFaultToleranceValue, byzantineErrorConfig.percentDropMessage,
-                                    runConfig.useCentralizedMultiArmedBandit)
+                                    runConfig.useCentralizedMultiArmedBandit, runConfig.sleepBetweenNodeProcessingMs)
 
     # Get the number of consensus rounds to run for
     numConsensusRounds = runConfig.numConsensusRounds
@@ -98,12 +98,10 @@ def runSimulation(superConfig):
         trueConsensusValue = getNextConsensusValue()
 
         # Trigger the nodes to start a consensus round
-        networkManager.startConsensus(trueConsensusValue)
-
         # Latencies is map of m-value to map of node # to latency experienced
         # Consensuses is map of m-value to map of node # to the decision reached
         # Wait for the nodes to reach consensus and then get the results
-        latencies, consensuses = networkManager.getNodeLatenciesAndDecisions()
+        latencies, consensuses = networkManager.startConsensusAndGetNodeLatenciesAndDecisions(trueConsensusValue)
 
         # Get the individual values reached by the nodes -- if they came to the same consensus, this should have only
         # 1 entry
@@ -128,6 +126,8 @@ def runSimulation(superConfig):
             else:
                 # If using a distributed method to decide the fault tolerance, trigger them to agree on new value of m
                 consensusFaultToleranceValue = networkManager.haveDistributedNodesChooseNextMValues()
+
+    networkManager.shutdown()
 
     return fullResults
 

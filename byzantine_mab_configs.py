@@ -58,7 +58,8 @@ class RunConfig:
     Configuration object containing the core parameters needed to execute the experiments.
     """
 
-    def __init__(self, numConsensusRounds, numNodes, possibleMValues, useCentralizedMultiArmedBandit):
+    def __init__(self, numConsensusRounds, numNodes, possibleMValues, useCentralizedMultiArmedBandit,
+                 sleepBetweenNodeProcessingMs):
         """
         Initialize the config.
 
@@ -68,11 +69,14 @@ class RunConfig:
         :param useCentralizedMultiArmedBandit:  True if the m values to use should be determined using a centralized
                                                 controller, false if the m values should be decided in a distributed
                                                 manner.
+        :param sleepBetweenNodeProcessingMs:    Amount of time in milliseconds for a node to sleep between checks of its
+                                                queue
         """
         self.numConsensusRounds = numConsensusRounds
         self.numNodes = numNodes
         self.possibleMValues = possibleMValues
         self.useCentralizedMultiArmedBandit = useCentralizedMultiArmedBandit
+        self.sleepBetweenNodeProcessingMs = sleepBetweenNodeProcessingMs
 
 
 class MultiArmedBanditConfig:
@@ -105,6 +109,7 @@ class NetworkLatencyConfig:
     """
     Network latency configuration.
     """
+
     def __init__(self, averageLatencyMs, latencyStdDevMs, maxLatencyMs):
         """
         Initialize the network latency configuration.
@@ -123,6 +128,7 @@ class ByzantineErrorConfig:
     """
     Byzantine error configuration.
     """
+
     def __init__(self, consensusRoundToSetMValue, percentDropMessage, defaultConsensusValue):
         """
 
@@ -145,6 +151,7 @@ class DistributedMABConfig:
     """
     Configuration for a distributed execution of multi-armed bandits.
     """
+
     def __init__(self, minMValueMargin, decentralizedMultiArmedBanditFaultToleranceValue, defaultMValuePair):
         """
         Initialize the distributed multi-armed bandit configuraiton.

@@ -101,11 +101,18 @@ def runSimulation(superConfig):
         # Latencies is map of m-value to map of node # to latency experienced
         # Consensuses is map of m-value to map of node # to the decision reached
         # Wait for the nodes to reach consensus and then get the results
-        latencies, consensuses = networkManager.startConsensusAndGetNodeLatenciesAndDecisions(trueConsensusValue)
+        latencies, consensuses, currentFaultyNodes = networkManager.startConsensusAndGetNodeLatenciesAndDecisions(trueConsensusValue)
 
         # Get the individual values reached by the nodes -- if they came to the same consensus, this should have only
         # 1 entry
-        decisionsSet = {m_val: set(consensuses[m_val].values()) for m_val in consensuses.keys()}
+        decisionsSet = {}
+        for mVal, decisionsForM in consensuses.items():
+            decisionsSetForM = []
+            for nodeNum, decision in decisionsForM.items():
+                if not (nodeNum in currentFaultyNodes):
+                    decisionsForM.append(decision)
+            decisionsSet[mVal] = set(decisionsSetForM)
+
         # We only care if consensus wasn't reached, rather than if the consensus was wrong (TODO I think...?)
         didFail = {m_val: (len(decisionsSet[m_val]) > 1) for m_val in decisionsSet.keys()}
 

@@ -136,7 +136,7 @@ class NetworkManager:
                     consensuses[mVal][nodeNum] = mValueResult.consensusOutcome
 
         self.resultsByNode.clear()
-        return (latencies, consensuses)
+        return (latencies, consensuses, self.currentFaultyNodes)
 
     def checkAllNodesDeliveredResults(self):
         """

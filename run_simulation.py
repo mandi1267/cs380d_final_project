@@ -101,7 +101,8 @@ def runSimulation(superConfig):
         # Latencies is map of m-value to map of node # to latency experienced
         # Consensuses is map of m-value to map of node # to the decision reached
         # Wait for the nodes to reach consensus and then get the results
-        latencies, consensuses, currentFaultyNodes = networkManager.startConsensusAndGetNodeLatenciesAndDecisions(trueConsensusValue)
+        latencies, consensuses, currentFaultyNodes = networkManager.startConsensusAndGetNodeLatenciesAndDecisions(
+            trueConsensusValue)
 
         # Get the individual values reached by the nodes -- if they came to the same consensus, this should have only
         # 1 entry

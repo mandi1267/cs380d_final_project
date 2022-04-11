@@ -101,10 +101,12 @@ class NetworkManager:
 
         :param trueConsensusValue:  Value that the general should send.
 
-        :return: Tuple of latencies and consensuses. Latencies is map of m-value to map of node # to latency
-        experienced. Consensuses is map of m-value to map of node # to the decision reached. For decentralized case,
-        there will be two keys in outer map (2 m values) for both consensuses and latencies. For centralized case,
-        there will be one key in outer map (1 m value) for both consensuses and latencies.
+        :return: Tuple of latencies and consensuses and current faulty nodes. Latencies is map of m-value to map of
+        node # to latency experienced. Consensuses is map of m-value to map of node # to the decision reached. For
+        decentralized case, there will be two keys in outer map (2 m values) for both consensuses and latencies. For
+        centralized case, there will be one key in outer map (1 m value) for both consensuses and latencies. The current
+        faulty nodes is a set of the node numbers for the nodes that were faulty in this round of consensus. This is
+        needed so that incorrect consensus reached by faulty nodes is not treated as a failure.
         """
         self.trueConsensusValue = trueConsensusValue
 

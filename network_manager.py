@@ -81,7 +81,7 @@ class NetworkManager:
 
         :param newNumFaultyNodes:   Number of faulty nodes that should exist in the system.
         """
-        if (self.numNodes <= (2 * newNumFaultyNodes)):
+        if (self.numNodes <= (3 * newNumFaultyNodes)):
             print "The number of nodes in this system (" + str(
                 self.numNodes) + ") is less than the minimum needed to tolerate " + str(
                 newNumFaultyNodes) + " faulty nodes"

@@ -3,6 +3,7 @@ import os
 import sys
 from byzantine_mab_configs import *
 import yaml
+import math
 
 YAML_FILE_SUFFIX="_super_config"
 YAML_FILE_EXT=".yaml"
@@ -27,13 +28,41 @@ if __name__=="__main__":
     if (len(sys.argv) != 3):
         print "Expected arg for directory for configs and arg for config file prefix"
 
-    # TODO create configs and set values
-    runConfig = None
-    multiArmedBanditConfig = None
-    roundConfig = None
-    networkLatencyConfig = None
-    byzantineErrorConfig = None
-    distributedMABConfig = None
+    numConsensusRounds = 100 # TODO We may want to change this for actual experiments
+    numNodes = 50 # TODO may want to change this for actual experiments
+    useCentralizedMultiArmedBandit = True
+    possibleMValues = [1, 2, 3] # TODO We mayu want to change this for actual experiments
+    sleepBetweenNodeProcessingMs = 5 # TODO May want to change this if it seems like we're sleeping too long. This is kind of arbitrary. This should be smaller than the average latency probably
+
+    runConfig = RunConfig(numConsensusRounds, numNodes, possibleMValues, useCentralizedMultiArmedBandit, sleepBetweenNodeProcessingMs)
+
+    roundsPerObservationPeriod = 10 # TODO we may want to change this for experiments. We want quite a few observation periods total, so if we increase this, we'll have to increase the number of rounds
+
+    roundConfig = RoundConfig(roundsPerObservationPeriod)
+
+    # TODO these are kind of arbitrary
+    averageLatencyMs = 20
+    latencyStdDevMs = 7
+    maxLatencyMs = 50
+    networkLatencyConfig = NetworkLatencyConfig(averageLatencyMs, latencyStdDevMs, maxLatencyMs)
+
+    # TODO this should definitely change for final experiments
+    # The first key should be 0 and the last key should be less than the total number of rounds
+    # I think (need to think on this more) that the gap between keys (round to switch) should be greater than the observation period (ideally at least 3x greater -- need more rounds for this though)
+    consensusRoundToSetMValue = {{0: 3}, {19: 2}, {37:3}, {51:1}, {75:3}}
+    percentDropMessage = 0.1 # TODO this is somewhat abitrary. Needs to be between 0 and 1. Having it too high just means using the default a lot, so that's probably not what we want
+    defaultConsensusValue = False
+
+    byzantineErrorConfig = ByzantineErrorConfig(consensusRoundToSetMValue, percentDropMessage, defaultConsensusValue)
+
+    minMValueMargin = 1 # If we increase the number of nodes, this should probably increase
+    decentralizedMultiArmedBanditFaultToleranceValue = math.floor((numNodes - 1)/3)
+
+    # This is also arbitrary. Constraints are that the minMvalueMargin is satisfied and the two values are a subset of the possible m values
+    defaultMValuePair = [possibleMValues[-2], possibleMValues[-1]]
+    distributedMABConfig = DistributedMABConfig(minMValueMargin, decentralizedMultiArmedBanditFaultToleranceValue, defaultMValuePair)
+
+    multiArmedBanditConfig = MultiArmedBanditConfig() # TODO Sai, I left this in case the multi-armed bandit piece needs parameters. Nothing needed for now
 
     configDir = sys.argv[1]
     baseFilePrefix = sys.argv[2]

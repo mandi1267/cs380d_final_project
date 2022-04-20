@@ -1,0 +1,6 @@
+run_config_file: "configs/example/run_config_file.yaml"
+multi_armed_bandit_config_file: "configs/example/multi_armed_bandit_config_file.yaml"
+round_config_file: "configs/example/round_config_file.yaml"
+network_latency_config_file: "configs/example/network_latency_config_file.yaml"
+byzantine_error_config_file: "configs/example/byzantine_error_config_file.yaml"
+distributed_mab_config_file: "configs/example/distributed_mab_config_file.yaml"

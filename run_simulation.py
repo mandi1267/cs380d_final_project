@@ -52,7 +52,7 @@ def runSimulation(superConfig):
     """
 
     # Get the configurations
-    runConfig = superConfig.getRoundConfig()
+    runConfig = superConfig.getRunConfig()
     byzantineErrorConfig = superConfig.getByzantineErrorConfig()
     roundConfig = superConfig.getRoundConfig()
     distributedMABConfig = superConfig.getDistributedMABConfig()
@@ -142,8 +142,9 @@ def runSimulation(superConfig):
 
 if __name__ == "__main__":
     if (len(sys.argv) != 3):
-        print "There must be one additional argument provided which is the name of a file containing pointers to all" \
+        print("There must be one additional argument provided which is the name of a file containing pointers to all" \
               " needed configuration files"
+             )
     superConfigFile = sys.argv[1]
     resultsOutputFile = sys.argv[2]
 

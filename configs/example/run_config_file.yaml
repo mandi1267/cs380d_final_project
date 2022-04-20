@@ -1,0 +1,2 @@
+useCentralizedMultiArmedBandit: false
+possibleMValues: [1, 2, 3]

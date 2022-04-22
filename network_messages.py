@@ -1,3 +1,19 @@
+class ConsensusStartMessage:
+    """
+    Message passed from node to node in the consensus protocol.
+    """
+
+    def __init__(self, mainGeneralID, ):
+        """
+        Create the message.
+
+        :param sourceNodeId:    Node id of the node that sent the message.
+        :param destNodeId:      Node id of the node that should receive the message.
+        :param content:         Contents of the message (type may vary).
+        """
+        self.mainGeneralID = mainGeneralID
+
+
 class ConsensusMessage:
     """
     Message passed from node to node in the consensus protocol.

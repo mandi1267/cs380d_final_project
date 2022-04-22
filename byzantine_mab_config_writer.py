@@ -26,10 +26,10 @@ def writeConfig(fileName, configObj):
 
 if __name__=="__main__":
     if (len(sys.argv) != 3):
-        print "Expected arg for directory for configs and arg for config file prefix"
+        print("Expected arg for directory for configs and arg for config file prefix")
 
     numConsensusRounds = 100 # TODO We may want to change this for actual experiments
-    numNodes = 50 # TODO may want to change this for actual experiments
+    numNodes = 8 # TODO may want to change this for actual experiments
     useCentralizedMultiArmedBandit = True
     possibleMValues = [1, 2, 3] # TODO We mayu want to change this for actual experiments
     sleepBetweenNodeProcessingMs = 5 # TODO May want to change this if it seems like we're sleeping too long. This is kind of arbitrary. This should be smaller than the average latency probably
@@ -49,7 +49,7 @@ if __name__=="__main__":
     # TODO this should definitely change for final experiments
     # The first key should be 0 and the last key should be less than the total number of rounds
     # I think (need to think on this more) that the gap between keys (round to switch) should be greater than the observation period (ideally at least 3x greater -- need more rounds for this though)
-    consensusRoundToSetMValue = {{0: 3}, {19: 2}, {37:3}, {51:1}, {75:3}}
+    consensusRoundToSetMValue = {0: 3, 19: 2, 37:3, 51:1, 75:3}
     percentDropMessage = 0.1 # TODO this is somewhat abitrary. Needs to be between 0 and 1. Having it too high just means using the default a lot, so that's probably not what we want
     defaultConsensusValue = False
 

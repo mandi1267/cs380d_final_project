@@ -33,6 +33,10 @@ class NetworkNode:
         self.defaultConsensusValue = defaultConsensusValue
         self.sleepBetweenProcessingMs = sleepBetweenProcessingMs
 
+    def dummy_consensus(self):
+        time.sleep(self.consensusTolerance / 10.0 )
+        self.outgoingMsgQueue.put(ConsensusResultMessage(self.consensusTolerance, self.consensusTolerance / 10.0, 0))
+
     def processMessageWhileLocked(self, msg):
         """
         Do processing of the message while holding the lock.
@@ -50,6 +54,8 @@ class NetworkNode:
         if (isinstance(msg, ConsensusMessage)):
             # TODO handle consensus messages
             pass
+        if (isinstance(msg, ConsensusStartMessage)):
+            self.dummy_consensus()
 
         return True
 
@@ -58,6 +64,8 @@ class NetworkNode:
         if (isinstance(msg, ConsensusMessage)):
             # TODO handle consensus messages
             pass
+        if (isinstance(msg, ConsensusStartMessage)):
+            self.dummy_consensus()
 
     def run(self):
         """

@@ -82,9 +82,9 @@ class NetworkManager:
         :param newNumFaultyNodes:   Number of faulty nodes that should exist in the system.
         """
         if (self.numNodes <= (3 * newNumFaultyNodes)):
-            print "The number of nodes in this system (" + str(
+            print ("The number of nodes in this system (" + str(
                 self.numNodes) + ") is less than the minimum needed to tolerate " + str(
-                newNumFaultyNodes) + " faulty nodes"
+                newNumFaultyNodes) + " faulty nodes")
         self.numFaultyNodes = newNumFaultyNodes
 
     def updateFaultyNodes(self):
@@ -112,6 +112,11 @@ class NetworkManager:
 
         # TODO pick a node to act as general to start the consensus protocol
         # TODO Actually execute the consensus protocol
+
+        for i in range(self.numNodes):
+            outgoingQueue = self.toNodeQueues[i]
+            with outgoingQueueLock:
+                outgoingQueue.put(ConsensusStartMessage(0))
 
         self.waitForNodeResponses()
 
@@ -246,7 +251,7 @@ class NetworkManager:
         if (isinstance(contents, bool)):
             return bool(random.getrandbits(1))
         else:
-            print "Corrupt message not implemented for type " + str(type(contents))
+            print("Corrupt message not implemented for type " + str(type(contents)))
             exit(1)
 
     def setConsensusTolerance(self, newConsensusTolerance):

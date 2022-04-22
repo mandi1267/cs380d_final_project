@@ -24,7 +24,7 @@ class MultiArmedBanditExecutor:
         :return: Next m value to use.
         """
         # TODO
-        pass
+        return self.mOptions[0]
 
     def getNextValuesOfM(self, resultsSinceLastRound, minMValueMargin):
         """

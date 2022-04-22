@@ -1,0 +1,6 @@
+byzantine_error_config_file: configs/example/test_byzantine_error_config_file.pkl
+distributed_mab_config_file: configs/example/test_distributed_mab_config_file.pkl
+multi_armed_bandit_config_file: configs/example/test_multi_armed_bandit_config_file.pkl
+network_latency_config_file: configs/example/test_network_latency_config_file.pkl
+round_config_file: configs/example/test_round_config_file.pkl
+run_config_file: configs/example/test_run_config_file.pkl

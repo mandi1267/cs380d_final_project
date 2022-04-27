@@ -61,12 +61,12 @@ class NetworkManager:
             threadingFunction = None
             if (useCentralizedMab):
                 node = NetworkNode(i, nextFromNodeQueue, nextFromNodeQueueLock, nextToNodeQueue, nextToNodeQueueLock,
-                                   defaultConsensusValue, sleepBetweenNodeProcessingMs)
+                                   defaultConsensusValue, sleepBetweenNodeProcessingMs, self.consensusTolerance)
                 threadingFunction = NetworkNode.run
             else:
                 node = DistributedMabNetworkNode(i, nextFromNodeQueue, nextFromNodeQueueLock, nextToNodeQueue,
                                                  nextToNodeQueueLock, defaultConsensusValue,
-                                                 sleepBetweenNodeProcessingMs)
+                                                 sleepBetweenNodeProcessingMs, self.consensusTolerance)
                 threadingFunction = DistributedMabNetworkNode.run
             self.nodes.append(node)
 
@@ -123,15 +123,19 @@ class NetworkManager:
 
         # Extract the latencies and decisions from the node result messages
         if (self.useCentralizedMab):
-            mValue = self.consensusTolerance
             latencyInnerDict = {}
             consensusValInnerDict = {}
+            mValues = []
             for nodeNum, results in self.resultsByNode.items():
+                mValues.append(results.mValue)
                 latencyInnerDict[nodeNum] = results.latency
                 consensusValInnerDict[nodeNum] = results.consensusOutcome
-
-            latencies = {mValue: latencyInnerDict}
-            consensuses = {mValue: consensusValInnerDict}
+            mValues = list(set(mValues))
+            if (len(mValues) != 1):
+                print("There should only have been one m value evaluated in the centralized case but the m values evaluated were " + str(mValues))
+                exit(1)
+            latencies = {mValues[0]: latencyInnerDict}
+            consensuses = {mValues[0]: consensusValInnerDict}
 
         else:
             latencies = {}

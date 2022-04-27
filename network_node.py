@@ -10,7 +10,7 @@ class NetworkNode:
     """
 
     def __init__(self, nodeNum, outgoingMsgQueue, outgoingMsgQueueLock, incomingMsgQueue, incomingMsgQueueLock,
-                 defaultConsensusValue, sleepBetweenProcessingMs):
+                 defaultConsensusValue, sleepBetweenProcessingMs, initialConsensusTolerance):
         """
         Create the node.
 
@@ -23,6 +23,7 @@ class NetworkNode:
         :param incomingMsgQueueLock:        Lock for the incoming message queue.
         :param defaultConsensusValue:       Default value to use in the consensus protocol.
         :param sleepBetweenProcessingMs:    Milliseconds to sleep between checking for new messages to process.
+        :param initialConsensusTolerance:   Initial consensus tolerance value (m value) to use.
         """
         # TODO need to check that these are storing the address to the same queue and not creating new queues
         self.outgoingMsgQueue = outgoingMsgQueue
@@ -30,7 +31,7 @@ class NetworkNode:
         self.incomingMsgQueue = incomingMsgQueue
         self.incomingMsgQueueLock = incomingMsgQueueLock
         self.nodeNum = nodeNum
-        self.consensusTolerance = None
+        self.consensusTolerance = initialConsensusTolerance
         self.defaultConsensusValue = defaultConsensusValue
         self.sleepBetweenProcessingMs = sleepBetweenProcessingMs
 
@@ -90,7 +91,7 @@ class DistributedMabNetworkNode(NetworkNode):
     """
 
     def __init__(self, nodeNum, outgoingMsgQueue, outgoingMsgQueueLock, incomingMsgQueue, incomingMsgQueueLock,
-                 defaultConsensusValue, sleepBetweenProcessingMs):
+                 defaultConsensusValue, sleepBetweenProcessingMs, initialConsensusTolerance):
         """
         Create the node.
 
@@ -103,6 +104,7 @@ class DistributedMabNetworkNode(NetworkNode):
         :param incomingMsgQueueLock:        Lock for the incoming message queue.
         :param defaultConsensusValue:       Default value to use in the consensus protocol.
         :param sleepBetweenProcessingMs:    Milliseconds to sleep between checking for new messages to process.
+        :param initialConsensusTolerance:   Initial consensus tolerance value (m value) to use.
         """
         NetworkNode.__init__(self, nodeNum, outgoingMsgQueue, outgoingMsgQueueLock, incomingMsgQueue,
-                             incomingMsgQueueLock, defaultConsensusValue, sleepBetweenProcessingMs)
+                             incomingMsgQueueLock, defaultConsensusValue, sleepBetweenProcessingMs, initialConsensusTolerance)

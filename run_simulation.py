@@ -36,7 +36,7 @@ def getInitialFaultToleranceValue(possibleMValues, useCentralizedMab, minMValueM
     # TODO do we just want random or do we want to choose the most conservative to start?
     # Maybe this should be part of the multi-armed bandit decider instead
     if (useCentralizedMab):
-        return random.choice(possibleMValues)
+        return [random.choice(possibleMValues)]
     else:
         # TODO need to choose 2 values
         pass
@@ -73,7 +73,7 @@ def runSimulation(superConfig):
     networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultConsensusValue,
                                     consensusFaultToleranceValue, byzantineErrorConfig.percentDropMessage,
                                     runConfig.useCentralizedMultiArmedBandit, runConfig.sleepBetweenNodeProcessingMs)
-    networkManager.setConsensusTolerance(max(runConfig.possibleMValues))
+    # networkManager.setConsensusTolerance(max(runConfig.possibleMValues))
 
     # Get the number of consensus rounds to run for
     numConsensusRounds = runConfig.numConsensusRounds

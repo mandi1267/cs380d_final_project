@@ -45,7 +45,7 @@ class NetworkManager:
         self.toNodeQueues = []
         self.toNodeQueueLocks = []
         self.nodes = []
-        self.pendingMessages = [queue.PriorityQueue for i in range(self.numNodes)]
+        self.pendingMessages = [queue.PriorityQueue() for i in range(self.numNodes)]
         self.resultsByNode = {}
         self.threads = []
         for i in range(self.numNodes):
@@ -71,9 +71,9 @@ class NetworkManager:
             self.nodes.append(node)
 
             # TODO check if this is the proper way to start a thread using a class function
-            nodeThread = threading.Thread(threadingFunction, args=(node,))
+            nodeThread = threading.Thread(target=threadingFunction, args=(node,))
             self.threads.append(nodeThread)
-            nodeThread.run()
+            nodeThread.start()
 
     def changeNumFaultyNodes(self, newNumFaultyNodes):
         """
@@ -115,6 +115,7 @@ class NetworkManager:
 
         for i in range(self.numNodes):
             outgoingQueue = self.toNodeQueues[i]
+            outgoingQueueLock = self.toNodeQueueLocks[i]
             with outgoingQueueLock:
                 outgoingQueue.put(ConsensusStartMessage(0))
 

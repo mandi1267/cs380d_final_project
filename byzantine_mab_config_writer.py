@@ -29,10 +29,10 @@ if __name__=="__main__":
         print("Expected arg for directory for configs and arg for config file prefix")
 
     numConsensusRounds = 100 # TODO We may want to change this for actual experiments
-    numNodes = 8 # TODO may want to change this for actual experiments
+    numNodes = 10 # TODO may want to change this for actual experiments
     useCentralizedMultiArmedBandit = True
     possibleMValues = [1, 2, 3] # TODO We mayu want to change this for actual experiments
-    sleepBetweenNodeProcessingMs = 5 # TODO May want to change this if it seems like we're sleeping too long. This is kind of arbitrary. This should be smaller than the average latency probably
+    sleepBetweenNodeProcessingMs = 0.1 # TODO May want to change this if it seems like we're sleeping too long. This is kind of arbitrary. This should be smaller than the average latency probably
 
     runConfig = RunConfig(numConsensusRounds, numNodes, possibleMValues, useCentralizedMultiArmedBandit, sleepBetweenNodeProcessingMs)
 

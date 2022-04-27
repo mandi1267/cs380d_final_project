@@ -70,7 +70,7 @@ def runSimulation(superConfig):
                                                                  runConfig.useCentralizedMultiArmedBandit,
                                                                  distributedMABConfig.minMValueMargin)
     # Create nodes and make network
-    networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultValue,
+    networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultConsensusValue,
                                     consensusFaultToleranceValue, byzantineErrorConfig.percentDropMessage,
                                     runConfig.useCentralizedMultiArmedBandit, runConfig.sleepBetweenNodeProcessingMs)
 

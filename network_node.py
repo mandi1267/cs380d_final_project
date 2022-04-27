@@ -30,7 +30,8 @@ class NetworkNode:
         self.incomingMsgQueue = incomingMsgQueue
         self.incomingMsgQueueLock = incomingMsgQueueLock
         self.nodeNum = nodeNum
-        self.defaultConsensusValue = defaultConsensusValue
+        self.consensusTolerance = None
+        self.defaultConsensusValue = self.consensusTolerance = defaultConsensusValue
         self.sleepBetweenProcessingMs = sleepBetweenProcessingMs
 
     def dummy_consensus(self):

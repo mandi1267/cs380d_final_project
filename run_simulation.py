@@ -73,7 +73,6 @@ def runSimulation(superConfig):
     networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultConsensusValue,
                                     consensusFaultToleranceValue, byzantineErrorConfig.percentDropMessage,
                                     runConfig.useCentralizedMultiArmedBandit, runConfig.sleepBetweenNodeProcessingMs)
-    # networkManager.setConsensusTolerance(max(runConfig.possibleMValues))
 
     # Get the number of consensus rounds to run for
     numConsensusRounds = runConfig.numConsensusRounds

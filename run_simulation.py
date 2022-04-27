@@ -73,6 +73,7 @@ def runSimulation(superConfig):
     networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultConsensusValue,
                                     consensusFaultToleranceValue, byzantineErrorConfig.percentDropMessage,
                                     runConfig.useCentralizedMultiArmedBandit, runConfig.sleepBetweenNodeProcessingMs)
+    networkManager.setConsensusTolerance(max(runConfig.possibleMValues))
 
     # Get the number of consensus rounds to run for
     numConsensusRounds = runConfig.numConsensusRounds
@@ -86,6 +87,7 @@ def runSimulation(superConfig):
 
     # Run the experiments
     for i in range(numConsensusRounds):
+        print("Consensus run " + str(i) + "/" + str(numConsensusRounds))
         # Change the number of actual faulty nodes if the config says that a new faulty node count should be changed
         # in this round
         if (i in byzantineErrorConfig.consensusRoundToSetMValue.keys()):
@@ -111,7 +113,7 @@ def runSimulation(superConfig):
             decisionsSetForM = []
             for nodeNum, decision in decisionsForM.items():
                 if not (nodeNum in currentFaultyNodes):
-                    decisionsForM.append(decision)
+                    decisionsSetForM.append(decision)
             decisionsSet[mVal] = set(decisionsSetForM)
 
         # We only care if consensus wasn't reached, rather than if the consensus was wrong (TODO I think...?)

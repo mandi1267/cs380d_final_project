@@ -31,12 +31,14 @@ class NetworkNode:
         self.incomingMsgQueueLock = incomingMsgQueueLock
         self.nodeNum = nodeNum
         self.consensusTolerance = None
-        self.defaultConsensusValue = self.consensusTolerance = defaultConsensusValue
+        self.defaultConsensusValue = defaultConsensusValue
         self.sleepBetweenProcessingMs = sleepBetweenProcessingMs
 
     def dummy_consensus(self):
-        time.sleep(self.consensusTolerance / 10.0 )
-        self.outgoingMsgQueue.put(ConsensusResultMessage(self.consensusTolerance, self.consensusTolerance / 10.0, 0))
+        consensusToleranceVal = self.consensusTolerance[0]
+        sleepTime = consensusToleranceVal / 10.0
+        time.sleep(sleepTime)
+        self.outgoingMsgQueue.put(ConsensusResultMessage(consensusToleranceVal, sleepTime, 0))
 
     def processMessageWhileLocked(self, msg):
         """
@@ -55,8 +57,6 @@ class NetworkNode:
         if (isinstance(msg, ConsensusMessage)):
             # TODO handle consensus messages
             pass
-        if (isinstance(msg, ConsensusStartMessage)):
-            self.dummy_consensus()
 
         return True
 

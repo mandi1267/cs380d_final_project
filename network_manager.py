@@ -130,8 +130,8 @@ class NetworkManager:
                 latencyInnerDict[nodeNum] = results.latency
                 consensusValInnerDict[nodeNum] = results.consensusOutcome
 
-            latencies = {mValue, latencyInnerDict}
-            consensuses = {mValue, consensusValInnerDict}
+            latencies = {mValue: latencyInnerDict}
+            consensuses = {mValue: consensusValInnerDict}
 
         else:
             latencies = {}

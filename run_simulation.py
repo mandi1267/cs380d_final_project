@@ -70,7 +70,8 @@ def runSimulation(superConfig):
                                                                  runConfig.useCentralizedMultiArmedBandit,
                                                                  distributedMABConfig.minMValueMargin)
     # Create nodes and make network
-    networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultConsensusValue,
+    networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes,
+                                    byzantineErrorConfig.defaultConsensusValue,
                                     consensusFaultToleranceValue, byzantineErrorConfig.percentDropMessage,
                                     runConfig.useCentralizedMultiArmedBandit, runConfig.sleepBetweenNodeProcessingMs)
 
@@ -86,7 +87,7 @@ def runSimulation(superConfig):
 
     # Run the experiments
     for i in range(numConsensusRounds):
-        print("Consensus run " + str(i) + "/" + str(numConsensusRounds))
+        print("Consensus run " + str(i + 1) + "/" + str(numConsensusRounds))
         # Change the number of actual faulty nodes if the config says that a new faulty node count should be changed
         # in this round
         if (i in byzantineErrorConfig.consensusRoundToSetMValue.keys()):
@@ -144,8 +145,7 @@ def runSimulation(superConfig):
 if __name__ == "__main__":
     if (len(sys.argv) != 3):
         print("There must be one additional argument provided which is the name of a file containing pointers to all" \
-              " needed configuration files"
-             )
+              " needed configuration files")
     superConfigFile = sys.argv[1]
     resultsOutputFile = sys.argv[2]
 

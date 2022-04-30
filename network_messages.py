@@ -1,17 +1,31 @@
 class ConsensusStartMessage:
     """
-    Message passed from node to node in the consensus protocol.
+    Message passed from the controller to non-commanding-general nodes to indicate that they should start the consensus
+    protocol.
     """
 
-    def __init__(self, mainGeneralID, ):
+    def __init__(self, mainGeneralID):
         """
         Create the message.
 
-        :param sourceNodeId:    Node id of the node that sent the message.
-        :param destNodeId:      Node id of the node that should receive the message.
-        :param content:         Contents of the message (type may vary).
+        :param mainGeneralID:   Id of the node that will act as the commanding general for this consensus round
         """
         self.mainGeneralID = mainGeneralID
+
+
+class TriggerConsensusCommandingGeneral:
+    """
+    Message passed from the controller to the commanding general indicating that it should trigger a consensus round
+    by sending the given command.
+    """
+
+    def __init__(self, decision):
+        """
+        Create the message.
+
+        :param decision:    Decision that the commanding general should send.
+        """
+        self.decision = decision
 
 
 class ConsensusMessage:
@@ -77,6 +91,7 @@ class SetMValuesMessage:
                             positive integers.
         """
         self.nextMValues = nextMValues
+
 
 class ShutdownNodeMessage:
     """

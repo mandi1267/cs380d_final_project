@@ -6,6 +6,7 @@ import threading
 import copy
 import time
 import numpy as np
+from project_utils import *
 
 
 class NetworkManager:
@@ -61,12 +62,14 @@ class NetworkManager:
             threadingFunction = None
             if (useCentralizedMab):
                 node = NetworkNode(i, nextFromNodeQueue, nextFromNodeQueueLock, nextToNodeQueue, nextToNodeQueueLock,
-                                   defaultConsensusValue, sleepBetweenNodeProcessingMs, self.consensusTolerance)
+                                   defaultConsensusValue, sleepBetweenNodeProcessingMs, self.consensusTolerance,
+                                   self.networkLatencyConfig.maxLatencyMs * 1.5, self.numNodes)
                 threadingFunction = NetworkNode.run
             else:
                 node = DistributedMabNetworkNode(i, nextFromNodeQueue, nextFromNodeQueueLock, nextToNodeQueue,
                                                  nextToNodeQueueLock, defaultConsensusValue,
-                                                 sleepBetweenNodeProcessingMs, self.consensusTolerance)
+                                                 sleepBetweenNodeProcessingMs, self.consensusTolerance,
+                                                 self.networkLatencyConfig.maxLatencyMs * 1.5, self.numNodes)
                 threadingFunction = DistributedMabNetworkNode.run
             self.nodes.append(node)
 
@@ -94,6 +97,9 @@ class NetworkManager:
         """
         self.currentFaultyNodes = random.sample(range(self.numNodes), self.numFaultyNodes)
 
+    def getConsensusCommandingGeneralNum(self):
+        return random.choice(range(self.numNodes))
+
     def startConsensusAndGetNodeLatenciesAndDecisions(self, trueConsensusValue):
         """
         Trigger a round of consensus and wait for the nodes to each come to a decision and return the results. The
@@ -110,14 +116,16 @@ class NetworkManager:
         """
         self.trueConsensusValue = trueConsensusValue
 
-        # TODO pick a node to act as general to start the consensus protocol
-        # TODO Actually execute the consensus protocol
+        commandingGeneralNode = self.getConsensusCommandingGeneralNum()
 
         for i in range(self.numNodes):
             outgoingQueue = self.toNodeQueues[i]
             outgoingQueueLock = self.toNodeQueueLocks[i]
             with outgoingQueueLock:
-                outgoingQueue.put(ConsensusStartMessage(0))
+                if (i == commandingGeneralNode):
+                    outgoingQueue.put(TriggerConsensusCommandingGeneral(trueConsensusValue))
+                else:
+                    outgoingQueue.put(ConsensusStartMessage(commandingGeneralNode))
 
         self.waitForNodeResponses()
 
@@ -132,7 +140,8 @@ class NetworkManager:
                 consensusValInnerDict[nodeNum] = results.consensusOutcome
             mValues = list(set(mValues))
             if (len(mValues) != 1):
-                print("There should only have been one m value evaluated in the centralized case but the m values evaluated were " + str(mValues))
+                print("There should only have been one m value evaluated in the centralized case but the m values "
+                      "evaluated were " + str(mValues))
                 exit(1)
             latencies = {mValues[0]: latencyInnerDict}
             consensuses = {mValues[0]: consensusValInnerDict}
@@ -190,25 +199,17 @@ class NetworkManager:
                 outgoingQueueLock = self.toNodeQueueLocks[i]
                 outgoingQueue = self.toNodeQueues[i]
 
-                while (True):
+                while (not self.pendingMessages[i].empty()):
                     # Get the first message to be delivered and see if it should be delivered yet (see if delivery tine is less than current time)
                     # TODO verify that the priority queue returns the smallest element first
                     nextMsg = self.pendingMessages[i].get()
-                    if (nextMsg[0] < self.getCurrentTimeMillis()):
+                    if (nextMsg[0] < getCurrentTimeMillis()):
                         with outgoingQueueLock:
                             outgoingQueue.put(nextMsg[1])
                     else:
                         # If the message isn't ready to be delivered, put it back in the queue and break
                         self.pendingMessages[i].put(nextMsg)
                         break
-
-    def getCurrentTimeMillis(self):
-        """
-        Get the current time, in milliseconds.
-
-        :return: current time in milliseconds.
-        """
-        return time.time() * 1000
 
     def getMessageDelay(self):
         """
@@ -240,7 +241,7 @@ class NetworkManager:
             else:
                 passMsg.content = self.corruptMessageContents(passMsg.content)
 
-        currentTime = self.getCurrentTimeMillis()
+        currentTime = getCurrentTimeMillis()
         msgDelay = self.getMessageDelay()
         deliveryTime = currentTime + msgDelay
         self.pendingMessages[dest].put(item=(deliveryTime, passMsg))

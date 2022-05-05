@@ -19,7 +19,7 @@ class MultiArmedBanditExecutor:
         """
         Get the next value of m to use.
 
-        :param resultsSinceLastRound:   Results (SingleRoundResults obj) since the last time an m value was chosen.
+        :param resultsSinceLastRound:   Results (List of SingleRoundResults obj) since the last time an m value was chosen.
 
         :return: Next m value to use.
         """

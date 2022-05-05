@@ -60,16 +60,18 @@ class NetworkManager:
             self.toNodeQueues.append(nextToNodeQueue)
 
             threadingFunction = None
+            # TODO get the timeout time from a config (and also figure out how ot make it smaller without inducing
+            #  timeouts for non-dropped messages
             if (useCentralizedMab):
                 node = NetworkNode(i, nextFromNodeQueue, nextFromNodeQueueLock, nextToNodeQueue, nextToNodeQueueLock,
                                    defaultConsensusValue, sleepBetweenNodeProcessingMs, self.consensusTolerance,
-                                   self.networkLatencyConfig.maxLatencyMs * 1.5, self.numNodes)
+                                   self.networkLatencyConfig.maxLatencyMs * 50000, self.numNodes)
                 threadingFunction = NetworkNode.run
             else:
                 node = DistributedMabNetworkNode(i, nextFromNodeQueue, nextFromNodeQueueLock, nextToNodeQueue,
                                                  nextToNodeQueueLock, defaultConsensusValue,
                                                  sleepBetweenNodeProcessingMs, self.consensusTolerance,
-                                                 self.networkLatencyConfig.maxLatencyMs * 1.5, self.numNodes)
+                                                 self.networkLatencyConfig.maxLatencyMs * 50000, self.numNodes)
                 threadingFunction = DistributedMabNetworkNode.run
             self.nodes.append(node)
 
@@ -119,13 +121,27 @@ class NetworkManager:
         commandingGeneralNode = self.getConsensusCommandingGeneralNum()
 
         for i in range(self.numNodes):
-            outgoingQueue = self.toNodeQueues[i]
-            outgoingQueueLock = self.toNodeQueueLocks[i]
-            with outgoingQueueLock:
-                if (i == commandingGeneralNode):
-                    outgoingQueue.put(TriggerConsensusCommandingGeneral(trueConsensusValue))
-                else:
+
+            if (i != commandingGeneralNode):
+                outgoingQueue = self.toNodeQueues[i]
+                outgoingQueueLock = self.toNodeQueueLocks[i]
+                with outgoingQueueLock:
                     outgoingQueue.put(ConsensusStartMessage(commandingGeneralNode))
+
+        for i in range(self.numNodes):
+            if (i != commandingGeneralNode):
+                outgoingQueue = self.toNodeQueues[i]
+                outgoingQueueLock = self.toNodeQueueLocks[i]
+
+                queueEmpty = False
+                while (not queueEmpty):
+                    with outgoingQueueLock:
+                        queueEmpty = outgoingQueue.empty()
+                        time.sleep(10/1000) # TODO get this value from a config
+        commanderOutgoingQueue = self.toNodeQueues[commandingGeneralNode]
+        commanderOutgoingQueueLock = self.toNodeQueueLocks[commandingGeneralNode]
+        with commanderOutgoingQueueLock:
+            commanderOutgoingQueue.put(TriggerConsensusCommandingGeneral(trueConsensusValue))
 
         self.waitForNodeResponses()
 
@@ -157,7 +173,26 @@ class NetworkManager:
                     consensuses[mVal][nodeNum] = mValueResult.consensusOutcome
 
         self.resultsByNode.clear()
+        self.clearQueues()
         return (latencies, consensuses, self.currentFaultyNodes)
+
+    def clearQueues(self):
+        """
+        Clear the queues to and from the nodes.
+        """
+        for i in range(self.numNodes):
+            incomingQueueLock = self.fromNodeQueueLocks[i]
+            incomingQueue = self.fromNodeQueues[i]
+            with incomingQueueLock:
+                while (not incomingQueue.empty()):
+                    incomingQueue.get()
+
+            outgoingQueue = self.toNodeQueues[i]
+            outgoingQueueLock = self.toNodeQueueLocks[i]
+
+            with outgoingQueueLock:
+                while (not outgoingQueue.empty()):
+                    outgoingQueue.get()
 
     def checkAllNodesDeliveredResults(self):
         """
@@ -235,11 +270,16 @@ class NetworkManager:
         """
         passMsg = copy.deepcopy(message)
         if (sender in self.currentFaultyNodes):
-            if (random.uniform(0, 1) < self.byzantineFaultDropMessagePercent):
-                # Simulate a byzantine fault in which the message is dropped
-                return
-            else:
-                passMsg.content = self.corruptMessageContents(passMsg.content)
+            # TODO currently having issues with timeouts being triggered even when messages are sent. For now,
+            #  disabling dropped messages and just making timeout time huge so that if a message is successfully sent,
+            #  it is always received by the target node. This requires turning off dropped messages though, since it
+            #  will take forever for them to be timed-out on
+            # if (random.uniform(0, 1) < self.byzantineFaultDropMessagePercent):
+            #     # Simulate a byzantine fault in which the message is dropped
+            #     print("Dropping message from " + str(sender) + " to " + str(dest))
+            #     return
+            # else:
+            passMsg.content = self.corruptMessageContents(passMsg.content)
 
         currentTime = getCurrentTimeMillis()
         msgDelay = self.getMessageDelay()

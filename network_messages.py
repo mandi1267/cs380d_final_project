@@ -33,17 +33,20 @@ class ConsensusMessage:
     Message passed from node to node in the consensus protocol.
     """
 
-    def __init__(self, sourceNodeId, destNodeId, content):
+    def __init__(self, sourceNodeId, destNodeId, content, commandingGeneralChain):
         """
         Create the message.
 
-        :param sourceNodeId:    Node id of the node that sent the message.
-        :param destNodeId:      Node id of the node that should receive the message.
-        :param content:         Contents of the message (type may vary).
+        :param sourceNodeId:            Node id of the node that sent the message.
+        :param destNodeId:              Node id of the node that should receive the message.
+        :param content:                 Contents of the message (type may vary).
+        :param commandingGeneralChain:  Denotes which commanding generals have issued their commands in the recursion.
+                                        Should include the sender of this message.
         """
         self.sourceNodeId = sourceNodeId
         self.destNodeId = destNodeId
         self.content = content
+        self.commandingGeneralChain = commandingGeneralChain
 
 
 class ConsensusResultMessage:

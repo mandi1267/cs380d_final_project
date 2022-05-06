@@ -125,7 +125,7 @@ def runSimulation(superConfig):
 
         # If we've run the specified number of consensus rounds in the observation period, choose new m value(s) and
         # switch to a new observation period
-        if ((i + 1) % roundsPerObservationPeriod):
+        if (((i + 1) % roundsPerObservationPeriod) == 0):
             resultsSinceLastDecision = fullResults.getAndResetResultsSinceLastDecision()
 
             if (runConfig.useCentralizedMultiArmedBandit):

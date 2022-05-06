@@ -62,6 +62,7 @@ def runSimulation(superConfig):
     # Get the number of calls per round. Number of consensus rounds in each observation period. The fault tolerance
     # will be the same for each consensus round in the observation period.
     roundsPerObservationPeriod = roundConfig.roundsPerObservationPeriod
+    print('roundsPerObservationPeriod', roundsPerObservationPeriod)
 
     # Initialize the full results
     fullResults = FullResults()
@@ -70,8 +71,7 @@ def runSimulation(superConfig):
                                                                  runConfig.useCentralizedMultiArmedBandit,
                                                                  distributedMABConfig.minMValueMargin)
     # Create nodes and make network
-    networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes,
-                                    byzantineErrorConfig.defaultConsensusValue,
+    networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes, byzantineErrorConfig.defaultConsensusValue,
                                     consensusFaultToleranceValue, byzantineErrorConfig.percentDropMessage,
                                     runConfig.useCentralizedMultiArmedBandit, runConfig.sleepBetweenNodeProcessingMs)
 
@@ -87,7 +87,7 @@ def runSimulation(superConfig):
 
     # Run the experiments
     for i in range(numConsensusRounds):
-        print("Consensus run " + str(i + 1) + "/" + str(numConsensusRounds))
+        print("Consensus run " + str(i) + "/" + str(numConsensusRounds))
         # Change the number of actual faulty nodes if the config says that a new faulty node count should be changed
         # in this round
         if (i in byzantineErrorConfig.consensusRoundToSetMValue.keys()):
@@ -125,10 +125,11 @@ def runSimulation(superConfig):
 
         # If we've run the specified number of consensus rounds in the observation period, choose new m value(s) and
         # switch to a new observation period
-        if ((i + 1) % roundsPerObservationPeriod):
+        if ((i + 1) % roundsPerObservationPeriod == 0):
             resultsSinceLastDecision = fullResults.getAndResetResultsSinceLastDecision()
 
             if (runConfig.useCentralizedMultiArmedBandit):
+                print('here')
                 # If using a centralized controller, get the next value of m to use and update the nodes to use this
                 # value
                 consensusFaultToleranceValue = multiArmedBanditExecutor.getNextValueOfM(resultsSinceLastDecision)
@@ -145,7 +146,8 @@ def runSimulation(superConfig):
 if __name__ == "__main__":
     if (len(sys.argv) != 3):
         print("There must be one additional argument provided which is the name of a file containing pointers to all" \
-              " needed configuration files")
+              " needed configuration files"
+             )
     superConfigFile = sys.argv[1]
     resultsOutputFile = sys.argv[2]
 

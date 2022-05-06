@@ -13,18 +13,22 @@ class MultiArmedBanditExecutor:
         """
         self.mOptions = mOptions
         self.multiArmedBanditConfig = multiArmedBanditConfig
+        self.i = 0
         # TODO
 
     def getNextValueOfM(self, resultsSinceLastRound):
         """
         Get the next value of m to use.
 
-        :param resultsSinceLastRound:   Results (List of SingleRoundResults obj) since the last time an m value was chosen.
+        :param resultsSinceLastRound:   Results (SingleRoundResults obj) since the last time an m value was chosen.
 
         :return: Next m value to use.
         """
         # TODO
-        return self.mOptions[0]
+        m = self.mOptions[self.i]
+        print(m)
+        self.i = (self.i+1) % len(self.mOptions)
+        return m
 
     def getNextValuesOfM(self, resultsSinceLastRound, minMValueMargin):
         """

@@ -22,7 +22,9 @@ if __name__ == "__main__":
     
     # consensuses_by_node = []
     round_latencies = [round_res.latenciesByNode for round_res in res.perRoundResults]
-    max_round_latencies = [min([v for k, v in lats[1].items()]) for lats in round_latencies]
+    for lats in round_latencies:
+        print([v for k, v in (list(lats.items())[0][1]).items()])
+    max_round_latencies = [max([v for k, v in (list(lats.items())[0][1]).items()]) for lats in round_latencies]
 
     obs_period_lats = [np.average(max_round_latencies[i*roundsPerObservationPeriod:(i+1)*roundsPerObservationPeriod]) for i in range(numObservationPeriods)]
 

@@ -48,6 +48,11 @@ class ConsensusMessage:
         self.content = content
         self.commandingGeneralChain = commandingGeneralChain
 
+    def __lt__(self, other):
+        # Needed in case two messages have the same delivery time
+        return (self.sourceNodeId, self.destNodeId, self.commandingGeneralChain) < (
+        other.sourceNodeId, other.destNodeId, other.commandingGeneralChain)
+
 
 class ConsensusResultMessage:
     """

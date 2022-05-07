@@ -85,6 +85,8 @@ def runSimulation(superConfig):
     # tolerance of the consensus algorithm
     multiArmedBanditExecutor = MultiArmedBanditExecutor(runConfig.possibleMValues, multiArmedBanditConfig)
 
+    networkManager.changeNumFaultyNodes(trueFaultsValue)
+
     # Run the experiments
     for i in range(numConsensusRounds):
         print("Consensus run " + str(i + 1) + "/" + str(numConsensusRounds))
@@ -157,3 +159,4 @@ if __name__ == "__main__":
 
     # Output the results to file
     joblib.dump(fullResults, resultsOutputFile)
+    print("Done with experiment!")

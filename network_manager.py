@@ -2,11 +2,11 @@ from network_messages import *
 from network_node import *
 import queue
 import random
-import threading
 import copy
 import time
 import numpy as np
 from project_utils import *
+import multiprocessing
 
 
 class NetworkManager:
@@ -48,14 +48,14 @@ class NetworkManager:
         self.nodes = []
         self.pendingMessages = [queue.PriorityQueue() for i in range(self.numNodes)]
         self.resultsByNode = {}
-        self.threads = []
+        self.processes = []
         for i in range(self.numNodes):
-            nextFromNodeQueue = queue.Queue()
-            nextFromNodeQueueLock = threading.Lock()
+            nextFromNodeQueue = multiprocessing.Queue()
+            nextFromNodeQueueLock = multiprocessing.Lock()
             self.fromNodeQueues.append(nextFromNodeQueue)
             self.fromNodeQueueLocks.append(nextFromNodeQueueLock)
-            nextToNodeQueue = queue.Queue()
-            nextToNodeQueueLock = threading.Lock()
+            nextToNodeQueue = multiprocessing.Queue()
+            nextToNodeQueueLock = multiprocessing.Lock()
             self.toNodeQueueLocks.append(nextToNodeQueueLock)
             self.toNodeQueues.append(nextToNodeQueue)
 
@@ -75,10 +75,9 @@ class NetworkManager:
                 threadingFunction = DistributedMabNetworkNode.run
             self.nodes.append(node)
 
-            # TODO check if this is the proper way to start a thread using a class function
-            nodeThread = threading.Thread(target=threadingFunction, args=(node,))
-            self.threads.append(nodeThread)
-            nodeThread.start()
+            nodeProcess = multiprocessing.Process(target=threadingFunction, args=(node,))
+            self.processes.append(nodeProcess)
+            nodeProcess.start()
 
     def changeNumFaultyNodes(self, newNumFaultyNodes):
         """
@@ -364,5 +363,5 @@ class NetworkManager:
                         anyQueuesNotProcessed = True
                         break
 
-        for nodeThread in self.threads:
+        for nodeThread in self.processes:
             nodeThread.join()

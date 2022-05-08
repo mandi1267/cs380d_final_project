@@ -14,7 +14,8 @@ def getNextConsensusValue():
 
     :return: Next value that the nodes should agree upon.
     """
-    return bool(random.getrandbits(1))
+    # return bool(random.getrandbits(1))
+    return True
 
 
 def getInitialFaultToleranceValue(possibleMValues, useCentralizedMab, minMValueMargin):

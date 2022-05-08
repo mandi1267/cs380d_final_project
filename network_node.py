@@ -2,6 +2,7 @@ from network_messages import *
 import queue
 import threading
 import time
+import numpy as np
 
 
 class NetworkNode:
@@ -34,12 +35,15 @@ class NetworkNode:
         self.consensusTolerance = initialConsensusTolerance
         self.defaultConsensusValue = defaultConsensusValue
         self.sleepBetweenProcessingMs = sleepBetweenProcessingMs
+        self.isFaulty = False
+        self.numFaultyNodes = 0
 
     def dummy_consensus(self):
         consensusToleranceVal = self.consensusTolerance[0]
+        # print('using m value', consensusToleranceVal, 'faulty nodes', self.numFaultyNodes)
         sleepTime = consensusToleranceVal / 10.0
         time.sleep(sleepTime)
-        self.outgoingMsgQueue.put(ConsensusResultMessage(consensusToleranceVal, sleepTime, 0))
+        self.outgoingMsgQueue.put(ConsensusResultMessage(consensusToleranceVal, sleepTime, not ((self.numFaultyNodes > consensusToleranceVal) or (self.isFaulty))))
 
     def processMessageWhileLocked(self, msg):
         """

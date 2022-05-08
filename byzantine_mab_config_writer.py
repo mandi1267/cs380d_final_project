@@ -28,7 +28,7 @@ if __name__=="__main__":
     if (len(sys.argv) != 3):
         print("Expected arg for directory for configs and arg for config file prefix")
 
-    numConsensusRounds = 100 # TODO We may want to change this for actual experiments
+    numConsensusRounds = 1000 # TODO We may want to change this for actual experiments
     numNodes = 10 # TODO may want to change this for actual experiments
     useCentralizedMultiArmedBandit = True
     possibleMValues = [1, 2, 3] # TODO We mayu want to change this for actual experiments
@@ -49,9 +49,10 @@ if __name__=="__main__":
     # TODO this should definitely change for final experiments
     # The first key should be 0 and the last key should be less than the total number of rounds
     # I think (need to think on this more) that the gap between keys (round to switch) should be greater than the observation period (ideally at least 3x greater -- need more rounds for this though)
-    consensusRoundToSetMValue = {0: 3, 19: 2, 37:3, 51:1, 75:3}
-    percentDropMessage = 0.1 # TODO this is somewhat abitrary. Needs to be between 0 and 1. Having it too high just means using the default a lot, so that's probably not what we want
-    defaultConsensusValue = False
+    consensusRoundToSetMValue = {0: 3, 190: 2, 370:3, 510:1, 750:3}
+    # consensusRoundToSetMValue = {0: 2, 19: 2, 37:2, 51:2, 75:2} # Constant
+    percentDropMessage = 0.0 # TODO this is somewhat abitrary. Needs to be between 0 and 1. Having it too high just means using the default a lot, so that's probably not what we want
+    defaultConsensusValue = True
 
     byzantineErrorConfig = ByzantineErrorConfig(consensusRoundToSetMValue, percentDropMessage, defaultConsensusValue)
 

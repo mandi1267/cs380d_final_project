@@ -86,6 +86,8 @@ class NetworkManager:
                 self.numNodes) + ") is less than the minimum needed to tolerate " + str(
                 newNumFaultyNodes) + " faulty nodes")
         self.numFaultyNodes = newNumFaultyNodes
+        for node in self.nodes:
+            node.numFaultyNodes = self.numFaultyNodes
 
     def updateFaultyNodes(self):
         """
@@ -93,6 +95,8 @@ class NetworkManager:
         self.numFaultyNodes
         """
         self.currentFaultyNodes = random.sample(range(self.numNodes), self.numFaultyNodes)
+        for node in self.nodes:
+            node.isFaulty = (node.nodeNum in self.currentFaultyNodes)
 
     def startConsensusAndGetNodeLatenciesAndDecisions(self, trueConsensusValue):
         """
@@ -254,7 +258,8 @@ class NetworkManager:
         :return: Corrupted message contents.
         """
         if (isinstance(contents, bool)):
-            return bool(random.getrandbits(1))
+            # return bool(random.getrandbits(1))
+            return False
         else:
             print("Corrupt message not implemented for type " + str(type(contents)))
             exit(1)

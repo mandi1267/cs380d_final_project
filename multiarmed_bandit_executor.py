@@ -20,8 +20,9 @@ class MultiArmedBanditExecutor:
         self.si = np.zeros(self.n_arms)
         self.prev_l = None
         self.i = 0
-        self.gamma = 1.0
-        self.rew_bias = 0.3
+        self.gamma = 0.5
+        self.rew_bias = 0.4
+        self.failure_penalty = -0.3
         # TODO
 
     def getNextValueOfM(self, resultsSinceLastRound):
@@ -32,10 +33,15 @@ class MultiArmedBanditExecutor:
 
         :return: Next m value to use.
         """
-        print(f'ni {self.ni}\n si {self.si}')
         # Get the observations from the previous arm pull and which arm it was
         round_latencies = [round_res.latenciesByNode for round_res in resultsSinceLastRound]
         avg_latency = np.average([max([v for k, v in (list(lats.items())[0][1]).items()]) for lats in round_latencies])
+        round_consensuses = [round_res.consensusesByNode for round_res in resultsSinceLastRound]
+        round_failures = np.where([np.average([v for k, v in (list(cons.items())[0][1]).items()])<=0.5 for cons in round_consensuses])
+
+        # for round_res in resultsSinceLastRound:
+            # print('round failures', [([v for k, v in (list(cons.items())[0][1]).items()]) for cons in round_consensuses])
+            # print('failures', round_failures[0].size)
 
         if (self.prev_l is not None):
             # Update arm pull and reward counters
@@ -43,7 +49,12 @@ class MultiArmedBanditExecutor:
             self.si *= self.gamma # Discounting
             self.ni[self.prev_l] += 1
             # TODO: change how reward is calculated to include failure penalties etc.
-            self.si[self.prev_l] += (self.rew_bias - avg_latency)
+            rew = 0.0
+            if round_failures[0].size == 0:
+                rew = (self.rew_bias - avg_latency)
+            else:
+                rew = self.failure_penalty
+            self.si[self.prev_l] += rew
 
         if (self.prev_l is None) or (np.any(self.ni==0)):
             # Initial rounds, make sure every arm is pulled at least once
@@ -58,8 +69,10 @@ class MultiArmedBanditExecutor:
         
         self.prev_l = l
 
-        print(f'Decision: {l}\n============')
+        print(f'ni {self.ni}\n si {self.si}')
+        print(f'Decision: {l}, m={self.mOptions[l]}\n============')
         return self.mOptions[l]
+        # return self.mOptions[1]
 
     def getNextValuesOfM(self, resultsSinceLastRound, minMValueMargin):
         """

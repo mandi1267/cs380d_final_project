@@ -319,14 +319,10 @@ if __name__ == "__main__":
         numFailures = failuresByMValue[mVal]
         percentFailuresByMValue[mVal] = numFailures / (numFailures + successesByMValue[mVal])
 
-    # TODO how to plot failures by their m value (we could also try to plot this graphically, but it'd just be a
-    #  spike up to 1 for rounds that failed, which seems a little visually confusing...?
-
-    # TODO
-    # Compute % of time that m value is greater than true value of m (safe)
-
-
+    # Plot the percentage of failed consensus rounds per observation period along with the chosen m value
     plotPercentFailuresPerObservationPeriod(didFailByRound, selectedMValues, observationPeriodStarts)
+
+    # Compute % of time that m value is greater than true value of m (safe)
 
     numSafeMValues = 0
 
@@ -340,3 +336,4 @@ if __name__ == "__main__":
     print("Percent of Consensus Rounds Where M was Sufficiently Conservative: " + str(percentSafeMValues))
 
     # TODO Number of observation periods to converge to ideal value -- can this be a CDF?
+

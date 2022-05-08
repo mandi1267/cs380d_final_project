@@ -119,6 +119,80 @@ def plotChosenMValuesAgainstTrueFaultyNodes(trueFaultyNodesByRound, chosenMValue
     plt.show()
 
 
+def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, observationPeriodStarts):
+    numRounds = len(didFailByRound)
+
+    xVals = np.array(range(numRounds))
+
+    effectiveObservationPeriodStarts = []
+    if observationPeriodStarts[0] > 0:
+        effectiveObservationPeriodStarts.append(0)
+        effectiveObservationPeriodStarts.extend(observationPeriodStarts)
+    else:
+        effectiveObservationPeriodStarts = observationPeriodStarts[:]
+
+    failuresForObsPeriod = []
+    successesForObsPeriod = []
+    nextObsPeriodIdx = 1
+    percentFailureForObsPeriod = []
+    for i in range(numRounds):
+        if nextObsPeriodIdx < len(effectiveObservationPeriodStarts):
+            nextObsPeriodStart = effectiveObservationPeriodStarts[nextObsPeriodIdx]
+            if i >= nextObsPeriodStart:
+                nextObsPeriodIdx += 1
+        currObsPeriodIdx = nextObsPeriodIdx - 1
+        if (currObsPeriodIdx >= len(failuresForObsPeriod)):
+            failuresForObsPeriod.append(0)
+
+        if (currObsPeriodIdx >= len(successesForObsPeriod)):
+            successesForObsPeriod.append(0)
+
+        if (didFailByRound[i]):
+            failuresForObsPeriod[currObsPeriodIdx] += 1
+        else:
+            successesForObsPeriod[currObsPeriodIdx] += 1
+
+    for obsPeriodIdx in range(len(failuresForObsPeriod)):
+        failuresCount = failuresForObsPeriod[obsPeriodIdx]
+        successesCount = successesForObsPeriod[obsPeriodIdx]
+        failureRate = failuresCount / (successesCount + failuresCount)
+        percentFailureForObsPeriod.append(failureRate)
+
+
+    obsPeriodFailure = []
+    nextObsPeriodIdx = 1
+    for i in range(numRounds):
+        if nextObsPeriodIdx < len(effectiveObservationPeriodStarts):
+            nextObsPeriodStart = effectiveObservationPeriodStarts[nextObsPeriodIdx]
+            if i >= nextObsPeriodStart:
+                nextObsPeriodIdx += 1
+        currObsPeriodIdx = nextObsPeriodIdx - 1
+        obsPeriodFailure.append(percentFailureForObsPeriod[currObsPeriodIdx])
+
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel("Round Number")
+    ax1.set_ylabel("Percent Failures In Observation Period", color='b')
+    ax1.plot(xVals, np.array(obsPeriodFailure), color='b')
+    ax1.tick_params(axis='y', labelcolor='b')
+
+    ax2 = ax1.twinx()
+
+    ax2.set_ylabel("MAB M Value", color='r')
+    ax2.plot(xVals, np.array(mValueByRound), color='r')
+    ax2.tick_params(axis='y', color='r')
+
+    fig.tight_layout()
+
+    for obsPeriodStart in observationPeriodStarts:
+        plt.avxline(obsPeriodStart)
+
+    plt.title("Percent Failures per Observation and MAB Chosen M Value")
+    plt.legend()
+    plt.show()
+
+
+
+
 if __name__ == "__main__":
     if ((len(sys.argv) != 2) and (len(sys.argv) != 3)):
         print("Need arguments: results file name, config file name, optional conservative m results file name")
@@ -218,6 +292,7 @@ if __name__ == "__main__":
     failuresByMValue = defaultdict(0)
     successesByMValue = defaultdict(0)
     totalFailures = 0
+    didFailByRound = []
     for singleRoundResult in res.perRoundResults:
         didFailByM = singleRoundResult.didFail
         if (len(didFailByM) != 1):
@@ -234,6 +309,8 @@ if __name__ == "__main__":
             failuresByMValue[mVal] += 1
         else:
             successesByMValue[mVal] += 1
+        didFailByRound.append(didFail)
+
 
     mValues = list(failuresByMValue.keys())
     mValues.extend(successesByMValue.keys())
@@ -247,6 +324,9 @@ if __name__ == "__main__":
 
     # TODO
     # Compute % of time that m value is greater than true value of m (safe)
+
+
+    plotPercentFailuresPerObservationPeriod(didFailByRound, selectedMValues, observationPeriodStarts)
 
     numSafeMValues = 0
 

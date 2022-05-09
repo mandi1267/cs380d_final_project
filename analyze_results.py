@@ -27,7 +27,7 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
     xVals = np.array(range(numRounds))
 
     for obsPeriodStart in observationPeriodFirstRound:
-        plt.avxline(obsPeriodStart)
+        plt.axvline(obsPeriodStart)
 
     chosenMLatenciesNoCommandingGeneral = []
 
@@ -110,7 +110,7 @@ def plotChosenMValuesAgainstTrueFaultyNodes(trueFaultyNodesByRound, chosenMValue
     plt.plot(xVals, np.array(trueFaultyNodesByRound), label="True Faulty Nodes Count", color="g")
 
     for obsPeriodStart in observationPeriodStarts:
-        plt.avxline(obsPeriodStart)
+        plt.axvline(obsPeriodStart)
 
     plt.title("Chosen M Value Against True Faulty Nodes Count")
     plt.xlabel("Round Number")
@@ -184,7 +184,7 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
     fig.tight_layout()
 
     for obsPeriodStart in observationPeriodStarts:
-        plt.avxline(obsPeriodStart)
+        plt.axvline(obsPeriodStart)
 
     plt.title("Percent Failures per Observation and MAB Chosen M Value")
     plt.legend()
@@ -249,7 +249,7 @@ if __name__ == "__main__":
             print("There should only be 1 m value in the results")
             exit(1)
         for mVal, latenciesForM in latenciesByNodeByM.items():
-            for nodeNum, latencyForNode in latenciesForM:
+            for nodeNum, latencyForNode in latenciesForM.items():
                 latenciesForRound.append(latencyForNode)
         chosenMLatencies.append(latenciesForRound)
 
@@ -289,8 +289,8 @@ if __name__ == "__main__":
     # Plot failures (maybe with time with different y axis?) TODO (how?)
     percentFailuresByMValue = {}
 
-    failuresByMValue = defaultdict(0)
-    successesByMValue = defaultdict(0)
+    failuresByMValue = defaultdict(int)
+    successesByMValue = defaultdict(int)
     totalFailures = 0
     didFailByRound = []
     for singleRoundResult in res.perRoundResults:

@@ -194,7 +194,7 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
 
 
 if __name__ == "__main__":
-    if ((len(sys.argv) != 2) and (len(sys.argv) != 3)):
+    if ((len(sys.argv) != 3) and (len(sys.argv) != 4)):
         print("Need arguments: results file name, config file name, optional conservative m results file name")
 
     res_fname = sys.argv[1]
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
     conservativeResFileName = None
     conservativeResults = None
-    if (len(sys.argv) == 3):
+    if (len(sys.argv) == 4):
         conservativeResFileName = sys.argv[3]
         conservativeResults = joblib.load(conservativeResFileName)
 

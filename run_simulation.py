@@ -145,6 +145,9 @@ def runSimulation(superConfig):
 
 
 if __name__ == "__main__":
+
+    multiprocessing.set_start_method('spawn')
+    
     if (len(sys.argv) != 3):
         print("There must be one additional argument provided which is the name of a file containing pointers to all" \
               " needed configuration files")

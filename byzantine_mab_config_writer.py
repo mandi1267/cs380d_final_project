@@ -34,31 +34,42 @@ def createConfigs():
     :return: Tuple of (RunConfig, MultiArmedBanditConfig, RoundConfig, NetworkLatencyConfig, ByzantineErrorConfig, DistributedMABConfig)
     """
 
-    numNodes = 64
-    maxFaulty = 21  # (numNodes-1)/3
+    # numNodes = 64
+    # maxFaulty = 21  # (numNodes-1)/3
+    # numNodes = 34
+    # maxFaulty = 11
+    numNodes = 10
+    maxFaulty = 3
 
-    possibleMValues = [1, 6, 11, 16, 21]  # TODO is this good?
+
+    # possibleMValues = [1, 6, 11, 16, 21]  # TODO is this good?
+    # possibleMValues = [1, 4, 6, 9, 11]  # TODO is this good?
     useCentralizedMultiArmedBandit = True
+    # possibleMValues = [1, 4, 6, 9, 11]  # TODO is this good?
+    # possibleMValues = [1, 2, 3, 4, 5]  # TODO is this good?
+    possibleMValues = [1, 2, 3]
 
     # TODO these are kind of arbitrary, but don't reaaaally affect the results, so that's okay
     averageLatencyMs = 20
     latencyStdDevMs = 7
     maxLatencyMs = 50
-    sleepBetweenNodeProcessingMs = 1  # Somewhat arbitrary, changed from 0.1
+    # sleepBetweenNodeProcessingMs = 1  # Somewhat arbitrary, changed from 0.1
+    sleepBetweenNodeProcessingMs = 0.1
 
     percentDropMessage = 0.0
     defaultConsensusValue = False
 
     # Not actually used
-    minMValueMargin = 5
+    minMValueMargin = 1
     decentralizedMultiArmedBanditFaultToleranceValue = max(possibleMValues)
-    defaultMValuePair = [6, 16]
+    defaultMValuePair = possibleMValues[2:4]
 
     # TODO These are the big unknowns -- need to discuss these
     roundsPerObservationPeriod = 15  # TODO replace this
     averageObsPeriodsToConvergence = 4  # TODO replace this
     conservativeObsPeriodsToConvergence = 2 * averageObsPeriodsToConvergence
-    numberOfTrueMs = 16  # TODO replace this
+    # numberOfTrueMs = 16  # TODO replace this
+    numberOfTrueMs = 5
 
     roundForNextM = 0
     consensusRoundToSetMValue = {}

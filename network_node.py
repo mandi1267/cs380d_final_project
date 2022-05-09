@@ -1,8 +1,19 @@
 from network_messages import *
 import multiprocessing
 import time
+import queue
 from project_utils import *
 from functools import partial
+
+from contextlib import contextmanager
+
+@contextmanager
+def acquire_lock_timeout(lock, timeout):
+    result = lock.acquire(timeout=timeout)
+    yield result
+    if result:
+        lock.release()
+
 
 
 def getMajorityOfBooleans(tiebreakerValue, booleansList):
@@ -205,16 +216,17 @@ class NetworkNode:
         self.executingConsensus = False
         self.pendingMessages = []
         self.debug = debug
+        self.pendingOutgoingMessages = []
 
     def printStrWithNodePrefix(self, printObj, level=""):
         if (self.debug or (level == "WARN") or (level == "ERROR")):
             print("Node " + str(self.nodeNum) + ": " + str(printObj), flush=True)
 
-    def dummy_consensus(self):
-        consensusToleranceVal = self.consensusTolerance[0]
-        sleepTime = consensusToleranceVal / 10.0
-        time.sleep(sleepTime)
-        self.outgoingMsgQueue.put(ConsensusResultMessage(consensusToleranceVal, sleepTime, 0))
+    # def dummy_consensus(self):
+    #     consensusToleranceVal = self.consensusTolerance[0]
+    #     sleepTime = consensusToleranceVal / 10.0
+    #     time.sleep(sleepTime)
+    #     self.outgoingMsgQueue.put(ConsensusResultMessage(consensusToleranceVal, sleepTime, 0))
 
     def processMessageWhileLocked(self, msg):
         """
@@ -349,6 +361,7 @@ class NetworkNode:
         :return:
         """
         # Get the time at which the message/timeout was received
+        # print("Handling consensus message")
         receivedTime = getCurrentTimeMillis()
         # Update the results
         self.receivedResults.append(ReceivedOrDefaultInfo(commandingGeneralChain, consensusValue))
@@ -360,9 +373,11 @@ class NetworkNode:
                 commandingGeneralChain))
         self.printStrWithNodePrefix("Consensus tolerance is " + str(max(self.consensusTolerance)))
         if (len(commandingGeneralChain) > max(self.consensusTolerance)):
+            # print("Node " + str(self.nodeNum) + " at m=0")
 
             # TODO Update to handle distributed case
             if (self.hasReceivedAllExpectedMessages(self.consensusTolerance[0])):
+                print("Node " + str(self.nodeNum) + " sending result")
                 self.sendConsensusResult(self.consensusTolerance[0],
                                          self.getDecisionFromCollectedResults(self.consensusTolerance[0]))
 
@@ -387,9 +402,12 @@ class NetworkNode:
         self.printStrWithNodePrefix(
             "Sending consensus message " + str(consensusValue) + " with commanding general chain " + str(
                 previousCommandingGenerals + [self.nodeNum]) + " to node " + str(targetNode))
-        with (self.outgoingMsgQueueLock):
-            self.outgoingMsgQueue.put(
-                ConsensusMessage(self.nodeNum, targetNode, consensusValue, previousCommandingGenerals + [self.nodeNum]))
+        self.pendingOutgoingMessages.append(ConsensusMessage(self.nodeNum, targetNode, consensusValue, previousCommandingGenerals + [self.nodeNum]))
+        # with (self.outgoingMsgQueueLock):
+            # print("Node " + str(self.nodeNum) + " acquired outgoing lock")
+            # self.outgoingMsgQueue.put(
+            #     ConsensusMessage(self.nodeNum, targetNode, consensusValue, previousCommandingGenerals + [self.nodeNum]))
+            # print("Node " + str(self.nodeNum) + " released outgoing lock")
 
     def executeCommandingGeneral(self, msg):
         """
@@ -443,8 +461,11 @@ class NetworkNode:
         self.consensusResultTree = None
         currentTime = getCurrentTimeMillis()
         consensusResultMsg = ConsensusResultMessage(mValue, currentTime - self.consensusStartTime, consensusResult)
-        with self.outgoingMsgQueueLock:
-            self.outgoingMsgQueue.put(consensusResultMsg)
+        self.pendingOutgoingMessages.append(consensusResultMsg)
+        # with self.outgoingMsgQueueLock:
+            # print("Node " + str(self.nodeNum) + " acquired outgoing lock")
+            # self.outgoingMsgQueue.put(consensusResultMsg)
+            # print("Node " + str(self.nodeNum) + " released outgoing lock")
 
     def hasReceivedAllExpectedMessages(self, consensusToleranceVal):
         """
@@ -486,15 +507,45 @@ class NetworkNode:
             self.pendingMessages.clear()
             for pendingMsg in pendingMsgsCopy:
                 self.handleConsensusMsg(pendingMsg)
+            numPendingMsgs = len(pendingMsgsCopy)
+            # if (numPendingMsgs != 0):
+            #     print("Node " + str(self.nodeNum) + " processed  " + str(numPendingMsgs) + " cached messages")
 
             for awaitingResponseMsg in timedOutMsgs:
                 self.handleAwaitingResponseTimeout(awaitingResponseMsg)
 
-            if (not self.incomingMsgQueue.empty()):
+            receivedMsgs = 0
+            while (not self.incomingMsgQueue.empty()):
                 with self.incomingMsgQueueLock:
+                    receivedMsgs += 1
                     msg = self.incomingMsgQueue.get()
                     keepProcessing = self.processMessageWhileLocked(msg)
                 self.processMessageWithoutLock(msg)
+            # if (receivedMsgs > 0):
+            #     print("Node " + str(self.nodeNum) + " received " + str(receivedMsgs) + " messages")
+
+            if (self.pendingOutgoingMessages):
+                with acquire_lock_timeout(self.outgoingMsgQueueLock, 0.5) as acquired:
+                    unhandledMessages = []
+                    if (acquired):
+                        for i in range(len(self.pendingOutgoingMessages)):
+                            pendingOutgoingMsg = self.pendingOutgoingMessages[i]
+                            try:
+                                self.outgoingMsgQueue.put(pendingOutgoingMsg, timeout=0.5)
+                            except (queue.Full):
+                                print("WARNING: Node " + str(self.nodeNum) + " unable to send messages because outgoing queue is full; sent " + str(i-1) + " messages before filling up")
+                                unhandledMessages = self.pendingOutgoingMessages[i:]
+                                break
+                        self.pendingOutgoingMessages = unhandledMessages
+                    else:
+                        print("WARNING: Failed to acquire lock for node " + str(self.nodeNum))
+
+            # numAwaitingResponses = len(self.awaitingResponse)
+            # if (numAwaitingResponses == 0):
+                # print("Node " + str(self.nodeNum) + " Done? " + str(self.hasReceivedAllExpectedMessages(self.consensusTolerance[0])))
+                # print("Node " + str(self.nodeNum) + " Awaiting messages " + str(len(self.awaitingResponse)))
+
+            # print("Processing " + str(self.nodeNum))
 
 
 class DistributedMabNetworkNode(NetworkNode):

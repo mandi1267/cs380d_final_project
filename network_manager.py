@@ -8,6 +8,18 @@ import numpy as np
 from project_utils import *
 import multiprocessing
 
+from contextlib import contextmanager
+
+@contextmanager
+def acquire_timeout(lock, timeout):
+    result = lock.acquire(timeout=timeout)
+    yield result
+    if result:
+        lock.release()
+
+
+
+
 
 class NetworkManager:
     """
@@ -24,7 +36,7 @@ class NetworkManager:
         :param defaultConsensusValue:               Default value to use when no value provided in consensus.
         :param initialConsensusTolerance:           Initial m value(s) to use in reaching consensus. Tuple of 2 entries
                                                     if distributed, single value if centralized.
-        :param byzantineFaultDropMessagePercent:    When a node is exhibiting byzantine faults, percent of the time
+        :param byzantineFaultDropMessagePercent:    When a node qis exhibiting byzantine faults, percent of the time
                                                     that it should simply drop messages. The remaining percent, it will
                                                     return a (possibly incorrect) value.
         :param useCentralizedMab:                   True if a centralized multi-armed bandit is used, false if each
@@ -136,7 +148,7 @@ class NetworkManager:
                 while (not queueEmpty):
                     with outgoingQueueLock:
                         queueEmpty = outgoingQueue.empty()
-                        time.sleep(10/1000) # TODO get this value from a config
+                        time.sleep(10 / 1000)  # TODO get this value from a config
         commanderOutgoingQueue = self.toNodeQueues[commandingGeneralNode]
         commanderOutgoingQueueLock = self.toNodeQueueLocks[commandingGeneralNode]
         with commanderOutgoingQueueLock:
@@ -183,8 +195,10 @@ class NetworkManager:
             incomingQueueLock = self.fromNodeQueueLocks[i]
             incomingQueue = self.fromNodeQueues[i]
             with incomingQueueLock:
+                # print("Acquired lock for " + str(i))
                 while (not incomingQueue.empty()):
                     incomingQueue.get()
+                # print("Released lock for " + str(i))
 
             outgoingQueue = self.toNodeQueues[i]
             outgoingQueueLock = self.toNodeQueueLocks[i]
@@ -199,7 +213,7 @@ class NetworkManager:
 
         :return: True if all nodes have delivered their consensus results, false if we're still waiting for results
         """
-        print("Results len " + str(len(self.resultsByNode)))
+        # print("Num nodes with delivered results " + str(len(self.resultsByNode)))
         return len(self.resultsByNode) == self.numNodes
 
     def waitForNodeResponses(self):
@@ -216,35 +230,72 @@ class NetworkManager:
         :return:
         """
         for i in range(self.numNodes):
+            # print("Num nodes " + str(self.numNodes))
+            # print("Checking status for " + str(i) + ", m=" + str(self.consensusTolerance))
+            # print("Is process alive? " + str(self.processes[i].is_alive()))
             incomingQueueLock = self.fromNodeQueueLocks[i]
             incomingQueue = self.fromNodeQueues[i]
 
             # Check for incoming messages
-            with incomingQueueLock:
-                while not incomingQueue.empty():
-                    incomingMsg = incomingQueue.get()
-                    if (isinstance(incomingMsg, ConsensusMessage)):
-                        self.enqueueMessageToDest(incomingMsg, i, incomingMsg.destNodeId)
-                    elif (isinstance(incomingMsg, ConsensusResultMessage) or
-                          isinstance(incomingMsg, DistributedConsensusResultMessage)):
-                        self.resultsByNode[i] = incomingMsg
+            # print("Checking incoming messages from " + str(i))
+            msgCount = 0
+
+            with acquire_timeout(incomingQueueLock, 0.5) as acquired:
+                if acquired:
+                    # print("Acquired lock for " + str(i))
+                    while not incomingQueue.empty():
+                        incomingMsg = incomingQueue.get()
+                        msgCount += 1
+                        if (isinstance(incomingMsg, ConsensusMessage)):
+                            self.enqueueMessageToDest(incomingMsg, i, incomingMsg.destNodeId)
+
+                            # if ((msgCount % 1000) == 0):
+                            #     print(str(i) + " still processing; cmd gen len " + str(
+                            #         len(incomingMsg.commandingGeneralChain)) + "; msgs so far " + str(msgCount))
+                        elif (isinstance(incomingMsg, ConsensusResultMessage) or
+                              isinstance(incomingMsg, DistributedConsensusResultMessage)):
+                            self.resultsByNode[i] = incomingMsg
+                    # print("Released lock for " + str(i))
+                else:
+                    print('WARNING: lock not available for ' + str(i))
+
 
             # Process messages that are pending for the current node
+            # print("Processed " + str(msgCount) + "; Checking pending messages for " + str(i))
+
+            sentMsgsCount = 0
             if (not self.pendingMessages[i].empty()):
                 outgoingQueueLock = self.toNodeQueueLocks[i]
                 outgoingQueue = self.toNodeQueues[i]
 
-                while (not self.pendingMessages[i].empty()):
-                    # Get the first message to be delivered and see if it should be delivered yet (see if delivery tine is less than current time)
-                    # TODO verify that the priority queue returns the smallest element first
-                    nextMsg = self.pendingMessages[i].get()
-                    if (nextMsg[0] < getCurrentTimeMillis()):
-                        with outgoingQueueLock:
-                            outgoingQueue.put(nextMsg[1])
+                with acquire_timeout(outgoingQueueLock, 0.5) as acquired:
+                    if acquired:
+                        # print("Outgoing lock for " + str(i) + " acquired")
+                        while (not self.pendingMessages[i].empty()):
+                            # print(str(i) + "Pending messages not empty")
+                            # Get the first message to be delivered and see if it should be delivered yet (see if delivery tine is less than current time)
+                            # TODO verify that the priority queue returns the smallest element first
+                            nextMsg = self.pendingMessages[i].get()
+                            if (nextMsg[0] < getCurrentTimeMillis()):
+                                # print("Putting in queue (full? " + str(outgoingQueue.full()) + "): " + str(sentMsgsCount))
+                                try:
+                                    outgoingQueue.put(nextMsg[1], timeout=0.5)
+                                    sentMsgsCount += 1
+                                except (queue.Full):
+                                    print("WARNING: Queue to node " + str(i) + " is full, exiting after processing " + str(sentMsgsCount))
+                                    self.pendingMessages[i].put(nextMsg)
+                                    break
+                                # if ((sentMsgsCount % 1000) == 0):
+                                #     print(str(i) + " sending still processing; sent msgs so far " + str(sentMsgsCount))
+                            else:
+                                # If the message isn't ready to be delivered, put it back in the queue and break
+                                self.pendingMessages[i].put(nextMsg)
+                                # print("Message not ready to be delivered; breaking")
+                                break
+                        # print("Outgoing lock for " + str(i) + " released ")
                     else:
-                        # If the message isn't ready to be delivered, put it back in the queue and break
-                        self.pendingMessages[i].put(nextMsg)
-                        break
+                        print('WARNING: outgoing lock not available to deliver to ' + str(i))
+            # print("Sent " + str(sentMsgsCount) + " to node " + str(i))
 
     def getMessageDelay(self):
         """
@@ -268,7 +319,8 @@ class NetworkManager:
         :param sender:  Id of the node that sent the message.
         :param dest:    Id of the node that should receive the message.
         """
-        passMsg = copy.deepcopy(message)
+        # passMsg = copy.deepcopy(message)
+        content = message.content
         if (sender in self.currentFaultyNodes):
             # TODO currently having issues with timeouts being triggered even when messages are sent. For now,
             #  disabling dropped messages and just making timeout time huge so that if a message is successfully sent,
@@ -279,7 +331,10 @@ class NetworkManager:
             #     print("Dropping message from " + str(sender) + " to " + str(dest))
             #     return
             # else:
-            passMsg.content = self.corruptMessageContents(passMsg.content)
+            # passMsg.content = self.corruptMessageContents(passMsg.content)
+            content = self.corruptMessageContents(content)
+
+        passMsg = ConsensusMessage(message.sourceNodeId, message.destNodeId, content, message.commandingGeneralChain)
 
         currentTime = getCurrentTimeMillis()
         msgDelay = self.getMessageDelay()

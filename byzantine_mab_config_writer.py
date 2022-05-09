@@ -5,6 +5,7 @@ from byzantine_mab_configs import *
 import yaml
 import math
 import random
+import numpy as np
 
 YAML_FILE_SUFFIX = "_super_config"
 YAML_FILE_EXT = ".yaml"
@@ -61,8 +62,9 @@ def createConfigs():
 
     roundForNextM = 0
     consensusRoundToSetMValue = {}
-    possibleMValuePersistenceLengths = range(conservativeObsPeriodsToConvergence - (roundsPerObservationPeriod / 2),
-                                             conservativeObsPeriodsToConvergence + (roundsPerObservationPeriod / 2))
+    possibleMValuePersistenceLengths = list(np.array(range(conservativeObsPeriodsToConvergence - (averageObsPeriodsToConvergence // 2),
+                                             conservativeObsPeriodsToConvergence + (averageObsPeriodsToConvergence // 2)), dtype=int)\
+                                                 * roundsPerObservationPeriod)
     for mValIdx in range(numberOfTrueMs):
         nextMValue = random.randint(0, maxFaulty)
         consensusRoundToSetMValue[roundForNextM] = nextMValue

@@ -199,6 +199,7 @@ class NetworkManager:
 
         :return: True if all nodes have delivered their consensus results, false if we're still waiting for results
         """
+        print("Results len " + str(len(self.resultsByNode)))
         return len(self.resultsByNode) == self.numNodes
 
     def waitForNodeResponses(self):
@@ -219,8 +220,8 @@ class NetworkManager:
             incomingQueue = self.fromNodeQueues[i]
 
             # Check for incoming messages
-            while not incomingQueue.empty():
-                with incomingQueueLock:
+            with incomingQueueLock:
+                while not incomingQueue.empty():
                     incomingMsg = incomingQueue.get()
                     if (isinstance(incomingMsg, ConsensusMessage)):
                         self.enqueueMessageToDest(incomingMsg, i, incomingMsg.destNodeId)

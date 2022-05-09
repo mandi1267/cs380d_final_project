@@ -335,5 +335,6 @@ if __name__ == "__main__":
     percentSafeMValues = numSafeMValues / numConsensusRounds
     print("Percent of Consensus Rounds Where M was Sufficiently Conservative: " + str(percentSafeMValues))
 
+    # TODO do we actually need this
     # TODO Number of observation periods to converge to ideal value -- can this be a CDF?
 

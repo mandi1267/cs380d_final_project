@@ -8,6 +8,58 @@ from byzantine_mab_configs import *
 from collections import defaultdict
 
 
+def getAverageLatencyOverObsPeriodForEachRound(latencies, observationPeriodStarts):
+    numRounds = len(latencies)
+
+    effectiveObservationPeriodStarts = []
+    if observationPeriodStarts[0] > 0:
+        effectiveObservationPeriodStarts.append(0)
+        effectiveObservationPeriodStarts.extend(observationPeriodStarts)
+    else:
+        effectiveObservationPeriodStarts = observationPeriodStarts[:]
+
+    aggregateLatencyForObsPeriod = []
+    latenciesForObservationPeriod = []
+    latencyCountInObsPeriod = []
+    nextObsPeriodIdx = 1
+    for i in range(numRounds):
+        if nextObsPeriodIdx < len(effectiveObservationPeriodStarts):
+            nextObsPeriodStart = effectiveObservationPeriodStarts[nextObsPeriodIdx]
+            if i >= nextObsPeriodStart:
+                nextObsPeriodIdx += 1
+        currObsPeriodIdx = nextObsPeriodIdx - 1
+        if (currObsPeriodIdx >= len(aggregateLatencyForObsPeriod)):
+            aggregateLatencyForObsPeriod.append(0)
+            latencyCountInObsPeriod.append(0)
+            latenciesForObservationPeriod.append([])
+
+        latenciesForRound = latencies[i]
+        latenciesForObservationPeriod[currObsPeriodIdx].extend(latenciesForRound)
+        for latency in latenciesForRound:
+            aggregateLatencyForObsPeriod[currObsPeriodIdx] += latency
+            latencyCountInObsPeriod[currObsPeriodIdx] += 1
+
+    avgLatencyForObsPeriod = []
+    stdDevForObsPeriod = []
+    for obsPeriodIdx in range(len(aggregateLatencyForObsPeriod)):
+        avgLatencyForObsPeriod.append(aggregateLatencyForObsPeriod[obsPeriodIdx] / latencyCountInObsPeriod[obsPeriodIdx])
+        stdDevForObsPeriod.append(statistics.stdev(latenciesForObservationPeriod[obsPeriodIdx]))
+
+    latenciesAvgOverObsPeriod = []
+    stdDevsByRoundOverObsPeriod = []
+    nextObsPeriodIdx = 1
+    for i in range(numRounds):
+        if nextObsPeriodIdx < len(effectiveObservationPeriodStarts):
+            nextObsPeriodStart = effectiveObservationPeriodStarts[nextObsPeriodIdx]
+            if i >= nextObsPeriodStart:
+                nextObsPeriodIdx += 1
+        currObsPeriodIdx = nextObsPeriodIdx - 1
+        latenciesAvgOverObsPeriod.append(avgLatencyForObsPeriod[currObsPeriodIdx])
+        stdDevsByRoundOverObsPeriod.append(stdDevForObsPeriod[currObsPeriodIdx])
+
+    return np.array(latenciesAvgOverObsPeriod), np.array(stdDevsByRoundOverObsPeriod)
+
+
 def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLatencies=None):
     """
 
@@ -26,8 +78,8 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
 
     xVals = np.array(range(numRounds))
 
-    for obsPeriodStart in observationPeriodFirstRound:
-        plt.axvline(obsPeriodStart, alpha=0.2)
+    # for obsPeriodStart in observationPeriodFirstRound:
+    #     plt.axvline(obsPeriodStart, alpha=0.2)
 
     chosenMLatenciesNoCommandingGeneral = []
 
@@ -52,14 +104,25 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
     chosenMLatenciesMinByRoundNp = np.array(chosenMLatenciesMinByRound)
     chosenMLatenciesMaxByRoundNp = np.array(chosenMLatenciesMaxByRound)
 
-    plt.plot(xVals, chosenMLatenciesAvgByRound, color="b", label="MAB M Value")
-    plt.fill_between(xVals, chosenMLatenciesAvgByRoundNp - chosenMLatenciesStdDevByRoundNp,
-                     chosenMLatenciesAvgByRoundNp + chosenMLatenciesStdDevByRoundNp, alpha=0.5, color="b")
-    plt.fill_between(xVals, chosenMLatenciesMinByRoundNp, chosenMLatenciesMaxByRoundNp, alpha=0.2, color="b")
+    # plt.plot(xVals, chosenMLatenciesAvgByRoundNp, color="b", label="MAB M Value", alpha=0.4)
+    # plt.fill_between(xVals, chosenMLatenciesAvgByRoundNp - chosenMLatenciesStdDevByRoundNp,
+    #                  chosenMLatenciesAvgByRoundNp + chosenMLatenciesStdDevByRoundNp, alpha=0.4, color="b")
+    # plt.fill_between(xVals, chosenMLatenciesMinByRoundNp, chosenMLatenciesMaxByRoundNp, alpha=0.2, color="b")
 
-    plt.title("Latency by Round")
+    chosenMLatenciesAvgOverObsPeriod, chosenMLatenciesStdDevOverObsPeriod = getAverageLatencyOverObsPeriodForEachRound(chosenMLatencies,
+                                                                                  observationPeriodFirstRound)
+
+    plt.plot(xVals, chosenMLatenciesAvgOverObsPeriod, color="b", label="MAB (Average)")
+
+    plt.fill_between(xVals, chosenMLatenciesAvgOverObsPeriod - chosenMLatenciesStdDevOverObsPeriod,
+                     chosenMLatenciesAvgOverObsPeriod + chosenMLatenciesStdDevOverObsPeriod, alpha=0.2, color="b", label="MAB (+/- std dev)")
+
+    plt.title("Latency by Observation Periods")
     plt.xlabel("Round Number")
     plt.ylabel("Latency (ms)")
+    plt.xlim(0, numConsensusRounds)
+    plt.ylim(bottom=0)
+
 
     if (conservativeMLatencies):
         conservativeMLatenciesNoCommandingGeneral = []
@@ -81,8 +144,6 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
             conservativeMLatenciesMinByRound.append(min(conservativeMLatencyForRoundNoCommandingGeneral))
             conservativeMLatenciesMaxByRound.append(max(conservativeMLatencyForRoundNoCommandingGeneral))
 
-        plt.plot(y=conservativeMLatenciesAvgByRound, label="MAB M Value")
-
         conservativeMLatenciesAvgByRoundNp = np.array(conservativeMLatenciesAvgByRound)
         conservativeMLatenciesStdDevByRoundNp = np.array(conservativeMLatenciesStdDevByRound)
         conservativeMLatenciesMinByRoundNp = np.array(conservativeMLatenciesMinByRound)
@@ -90,12 +151,38 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
 
         xVals = np.array(range(numRounds))
 
-        plt.plot(xVals, conservativeMLatenciesAvgByRound, color="r", label="Conservative M Value")
-        plt.fill_between(xVals, conservativeMLatenciesAvgByRoundNp - conservativeMLatenciesStdDevByRoundNp,
-                         conservativeMLatenciesAvgByRoundNp + conservativeMLatenciesStdDevByRoundNp, alpha=0.5,
-                         color="r")
-        plt.fill_between(xVals, conservativeMLatenciesMinByRoundNp, conservativeMLatenciesMaxByRoundNp, alpha=0.2,
-                         color="r")
+        conservativeMLatenciesAvgOverObsPeriod, conservativeMLatenciesStdDevOverObsPeriod = getAverageLatencyOverObsPeriodForEachRound(conservativeMLatencies,
+                                                                                            observationPeriodFirstRound)
+
+        # plt.plot(xVals, conservativeMLatenciesAvgByRound, color="r", label="Conservative M Value", alpha=0.4)
+        plt.plot(xVals, conservativeMLatenciesAvgOverObsPeriod, color="r",
+                 label="Conservative (Average)")
+
+        plt.fill_between(xVals, conservativeMLatenciesAvgOverObsPeriod - conservativeMLatenciesStdDevOverObsPeriod,
+                         conservativeMLatenciesAvgOverObsPeriod + conservativeMLatenciesStdDevOverObsPeriod, alpha=0.2, color="r",
+                         label="Conservative (+/- std dev)")
+        # plt.fill_between(xVals, conservativeMLatenciesAvgByRoundNp - conservativeMLatenciesStdDevByRoundNp,
+        #                  conservativeMLatenciesAvgByRoundNp + conservativeMLatenciesStdDevByRoundNp, alpha=0.4,
+        #                  color="r")
+        # plt.fill_between(xVals, conservativeMLatenciesMinByRoundNp, conservativeMLatenciesMaxByRoundNp, alpha=0.2,
+        #                  color="r")
+
+        plt.legend()
+
+        plt.figure()
+
+        latencyDifferences = conservativeMLatenciesAvgByRoundNp - chosenMLatenciesAvgByRoundNp
+        cumulativeLatencySavings = np.copy(latencyDifferences)
+        for i in range(1, numRounds):
+            cumulativeLatencySavings[i] = latencyDifferences[i] + cumulativeLatencySavings[i - 1]
+
+        plt.title("Aggregated Latency Savings")
+        plt.xlabel("Round Number")
+        plt.ylabel("Cumulative Latency Savings (ms)")
+        plt.plot(xVals, cumulativeLatencySavings)
+
+        plt.xlim(0, numConsensusRounds - 1)
+    else:
         plt.legend()
 
     # plt.show()
@@ -106,15 +193,17 @@ def plotChosenMValuesAgainstTrueFaultyNodes(trueFaultyNodesByRound, chosenMValue
 
     xVals = np.array(range(numRounds))
 
-    plt.plot(xVals, np.array(chosenMValuesByRound), label="MAB M Value", color="b")
-    plt.plot(xVals, np.array(trueFaultyNodesByRound), label="True Faulty Nodes Count", color="g")
+    plt.plot(xVals, np.array(chosenMValuesByRound), label="MAB M Value", color="b", alpha=0.6)
+    plt.plot(xVals, np.array(trueFaultyNodesByRound), label="True Faulty Nodes Count", color="g", linewidth=3)
 
-    for obsPeriodStart in observationPeriodStarts:
-        plt.axvline(obsPeriodStart, alpha=0.2)
+    # for obsPeriodStart in observationPeriodStarts:
+    #     plt.axvline(obsPeriodStart, alpha=0.2)
 
-    plt.title("Chosen M Value Against True Faulty Nodes Count")
+    plt.title("MAB M Value vs True Faulty Nodes Count")
     plt.xlabel("Round Number")
     plt.ylabel("M Value")
+    plt.xlim(0, numRounds)
+    plt.ylim(bottom=0)
     plt.legend()
     # plt.show()
 
@@ -155,9 +244,8 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
     for obsPeriodIdx in range(len(failuresForObsPeriod)):
         failuresCount = failuresForObsPeriod[obsPeriodIdx]
         successesCount = successesForObsPeriod[obsPeriodIdx]
-        failureRate = failuresCount / (successesCount + failuresCount)
+        failureRate = 100 * failuresCount / (successesCount + failuresCount)
         percentFailureForObsPeriod.append(failureRate)
-
 
     obsPeriodFailure = []
     nextObsPeriodIdx = 1
@@ -172,25 +260,24 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
     fig, ax1 = plt.subplots()
     ax1.set_xlabel("Round Number")
     ax1.set_ylabel("Percent Failures In Observation Period", color='b')
-    ax1.plot(xVals, np.array(obsPeriodFailure), color='b')
+    ax1.plot(xVals, np.array(obsPeriodFailure), color='b', label="Percent Failures")
     ax1.tick_params(axis='y', labelcolor='b')
 
     ax2 = ax1.twinx()
 
     ax2.set_ylabel("MAB M Value", color='r')
-    ax2.plot(xVals, np.array(mValueByRound), color='r')
-    ax2.tick_params(axis='y', color='r')
+    ax2.plot(xVals, np.array(mValueByRound), color='r', alpha=0.4, label="MAB M Value")
+    ax2.tick_params(axis='y', labelcolor='r')
 
-    fig.tight_layout()
+    # fig.tight_layout()
 
-    for obsPeriodStart in observationPeriodStarts:
-        plt.axvline(obsPeriodStart, alpha=0.2)
+    # for obsPeriodStart in observationPeriodStarts:
+    #     plt.axvline(obsPeriodStart, alpha=0.2)
 
-    plt.title("Percent Failures per Observation and MAB Chosen M Value")
-    plt.legend()
+    plt.xlim(0, numRounds)
+    plt.title("Percent Failures by Observation Period and MAB M Value")
+    # plt.legend()
     # plt.show()
-
-
 
 
 if __name__ == "__main__":
@@ -264,7 +351,7 @@ if __name__ == "__main__":
                 print("There should only be 1 m value in the results")
                 exit(1)
             for mVal, latenciesForM in latenciesByNodeByM.items():
-                for nodeNum, latencyForNode in latenciesForM:
+                for nodeNum, latencyForNode in latenciesForM.items():
                     latenciesForRound.append(latencyForNode)
             conservativeMLatencies.append(latenciesForRound)
 
@@ -296,6 +383,7 @@ if __name__ == "__main__":
     plt.figure()
     plotChosenMValuesAgainstTrueFaultyNodes(trueMValues, selectedMValues, observationPeriodStarts)
 
+
     # Plot failures (maybe with time with different y axis?) TODO (how?)
     percentFailuresByMValue = {}
 
@@ -321,7 +409,6 @@ if __name__ == "__main__":
             successesByMValue[mVal] += 1
         didFailByRound.append(didFail)
 
-
     mValues = list(failuresByMValue.keys())
     mValues.extend(successesByMValue.keys())
 
@@ -330,7 +417,7 @@ if __name__ == "__main__":
         percentFailuresByMValue[mVal] = numFailures / (numFailures + successesByMValue[mVal])
 
     # Plot the percentage of failed consensus rounds per observation period along with the chosen m value
-    plt.figure()
+    # plt.figure()
     plotPercentFailuresPerObservationPeriod(didFailByRound, selectedMValues, observationPeriodStarts)
 
     # Compute % of time that m value is greater than true value of m (safe)
@@ -350,4 +437,3 @@ if __name__ == "__main__":
     # TODO Number of observation periods to converge to ideal value -- can this be a CDF?
 
     plt.show()
-

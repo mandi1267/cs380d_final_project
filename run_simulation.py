@@ -93,6 +93,7 @@ def runSimulation(superConfig):
         # Change the number of actual faulty nodes if the config says that a new faulty node count should be changed
         # in this round
         if (i in byzantineErrorConfig.consensusRoundToSetMValue.keys()):
+            trueFaultsValue = byzantineErrorConfig.consensusRoundToSetMValue[i]
             networkManager.changeNumFaultyNodes(byzantineErrorConfig.consensusRoundToSetMValue[i])
 
         # Set the nodes that should exhibit byzantine error in the next consensus round

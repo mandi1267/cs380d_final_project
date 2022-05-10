@@ -27,7 +27,7 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
     xVals = np.array(range(numRounds))
 
     for obsPeriodStart in observationPeriodFirstRound:
-        plt.axvline(obsPeriodStart)
+        plt.axvline(obsPeriodStart, alpha=0.2)
 
     chosenMLatenciesNoCommandingGeneral = []
 
@@ -110,7 +110,7 @@ def plotChosenMValuesAgainstTrueFaultyNodes(trueFaultyNodesByRound, chosenMValue
     plt.plot(xVals, np.array(trueFaultyNodesByRound), label="True Faulty Nodes Count", color="g")
 
     for obsPeriodStart in observationPeriodStarts:
-        plt.axvline(obsPeriodStart)
+        plt.axvline(obsPeriodStart, alpha=0.2)
 
     plt.title("Chosen M Value Against True Faulty Nodes Count")
     plt.xlabel("Round Number")
@@ -184,7 +184,7 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
     fig.tight_layout()
 
     for obsPeriodStart in observationPeriodStarts:
-        plt.axvline(obsPeriodStart)
+        plt.axvline(obsPeriodStart, alpha=0.2)
 
     plt.title("Percent Failures per Observation and MAB Chosen M Value")
     plt.legend()
@@ -271,7 +271,16 @@ if __name__ == "__main__":
     # Plot latency of adaptive system vs latency of conservative m value
     plotLatencies(chosenMLatencies, observationPeriodStarts, conservativeMLatencies)
 
-    trueMValues = res.trueFaultyNodesCount
+    # trueMValues = res.trueFaultyNodesCount
+    # print(trueMValues)
+
+    trueMValues = []
+    trueMValue = 0
+    for i in range(len(res.perRoundResults)):
+        if (i in byzantineErrorConfig.consensusRoundToSetMValue.keys()):
+            trueMValue = byzantineErrorConfig.consensusRoundToSetMValue[i]
+        trueMValues.append(trueMValue)
+
     selectedMValues = []
     for singleRoundResult in res.perRoundResults:
         mValForRound = None

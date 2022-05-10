@@ -76,7 +76,7 @@ class NetworkManager:
             #  timeouts for non-dropped messages
             if (useCentralizedMab):
                 node = NetworkNode(i, nextFromNodeQueue, nextFromNodeQueueLock, nextToNodeQueue, nextToNodeQueueLock,
-                                   defaultConsensusValue, sleepBetweenNodeProcessingMs, self.consensusTolerance,
+                                   defaultConsensusValue, sleepBetweenNodeProcessingMs, [self.consensusTolerance],
                                    self.networkLatencyConfig.maxLatencyMs * 50000, self.numNodes)
                 threadingFunction = NetworkNode.run
             else:

@@ -36,13 +36,13 @@ def getInitialFaultToleranceValue(possibleMValues, useCentralizedMab, minMValueM
     # TODO do we just want random or do we want to choose the most conservative to start?
     # Maybe this should be part of the multi-armed bandit decider instead
     if (useCentralizedMab):
-        return [random.choice(possibleMValues)]
+        return random.choice(possibleMValues)
     else:
         # TODO need to choose 2 values
         pass
 
 
-def runSimulation(superConfig):
+def runSimulation(superConfig, fixedM=None):
     """
     Run the simulation and get results.
 
@@ -69,6 +69,10 @@ def runSimulation(superConfig):
     consensusFaultToleranceValue = getInitialFaultToleranceValue(runConfig.possibleMValues,
                                                                  runConfig.useCentralizedMultiArmedBandit,
                                                                  distributedMABConfig.minMValueMargin)
+    if (fixedM != None):
+        print("Using fixed m value " + str(fixedM))
+        consensusFaultToleranceValue = fixedM
+
     # Create nodes and make network
     networkManager = NetworkManager(networkLatencyConfig, runConfig.numNodes,
                                     byzantineErrorConfig.defaultConsensusValue,
@@ -128,17 +132,20 @@ def runSimulation(superConfig):
 
         # If we've run the specified number of consensus rounds in the observation period, choose new m value(s) and
         # switch to a new observation period
-        if (((i + 1) % roundsPerObservationPeriod) == 0):
-            resultsSinceLastDecision = fullResults.getAndResetResultsSinceLastDecision()
+        if (fixedM == None):
+            if (((i + 1) % roundsPerObservationPeriod) == 0):
+                resultsSinceLastDecision = fullResults.getAndResetResultsSinceLastDecision()
 
-            if (runConfig.useCentralizedMultiArmedBandit):
-                # If using a centralized controller, get the next value of m to use and update the nodes to use this
-                # value
-                consensusFaultToleranceValue = multiArmedBanditExecutor.getNextValueOfM(resultsSinceLastDecision)
-                networkManager.setConsensusTolerance(consensusFaultToleranceValue)
-            else:
-                # If using a distributed method to decide the fault tolerance, trigger them to agree on new value of m
-                consensusFaultToleranceValue = networkManager.haveDistributedNodesChooseNextMValues()
+                if (runConfig.useCentralizedMultiArmedBandit):
+                    # If using a centralized controller, get the next value of m to use and update the nodes to use this
+                    # value
+                    consensusFaultToleranceValue = multiArmedBanditExecutor.getNextValueOfM(resultsSinceLastDecision)
+
+                    print("Adjusting consensus fault tolerance value to " + str(consensusFaultToleranceValue))
+                    networkManager.setConsensusTolerance(consensusFaultToleranceValue)
+                else:
+                    # If using a distributed method to decide the fault tolerance, trigger them to agree on new value of m
+                    consensusFaultToleranceValue = networkManager.haveDistributedNodesChooseNextMValues()
 
     networkManager.shutdown()
 
@@ -149,17 +156,21 @@ if __name__ == "__main__":
 
     multiprocessing.set_start_method('spawn')
     
-    if (len(sys.argv) != 3):
+    if ((len(sys.argv) != 3) and (len(sys.argv) != 4)):
         print("There must be one additional argument provided which is the name of a file containing pointers to all" \
               " needed configuration files")
+        exit(1)
     superConfigFile = sys.argv[1]
     resultsOutputFile = sys.argv[2]
+    fixedM = None
+    if (len(sys.argv) == 4):
+        fixedM = int(sys.argv[3])
 
     # Read the configuration parameters
     superConfig = readSuperConfigYaml(superConfigFile)
 
     # Run the simulation and get the results
-    fullResults = runSimulation(superConfig)
+    fullResults = runSimulation(superConfig, fixedM)
 
     # Output the results to file
     joblib.dump(fullResults, resultsOutputFile)

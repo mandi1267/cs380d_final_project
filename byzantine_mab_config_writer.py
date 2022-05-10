@@ -38,8 +38,8 @@ def createConfigs():
     # maxFaulty = 21  # (numNodes-1)/3
     # numNodes = 34
     # maxFaulty = 11
-    numNodes = 10
-    maxFaulty = 3
+    numNodes = 13
+    maxFaulty = 4
 
 
     # possibleMValues = [1, 6, 11, 16, 21]  # TODO is this good?
@@ -47,7 +47,7 @@ def createConfigs():
     useCentralizedMultiArmedBandit = True
     # possibleMValues = [1, 4, 6, 9, 11]  # TODO is this good?
     # possibleMValues = [1, 2, 3, 4, 5]  # TODO is this good?
-    possibleMValues = [0, 1, 2, 3]
+    possibleMValues = [0, 1, 2, 3, 4]
 
     # TODO these are kind of arbitrary, but don't reaaaally affect the results, so that's okay
     averageLatencyMs = 20
@@ -78,6 +78,7 @@ def createConfigs():
                                                  * roundsPerObservationPeriod)
     for mValIdx in range(numberOfTrueMs):
         nextMValue = random.randint(0, maxFaulty)
+        # nextMValue = 4
         consensusRoundToSetMValue[roundForNextM] = nextMValue
         roundForNextM += random.choice(possibleMValuePersistenceLengths)
 
@@ -88,7 +89,23 @@ def createConfigs():
 
     runConfig = RunConfig(numConsensusRounds, numNodes, possibleMValues, useCentralizedMultiArmedBandit,
                           sleepBetweenNodeProcessingMs)
-    multiArmedBanditConfig = MultiArmedBanditConfig()  # TODO Sai, I left this in case the multi-armed bandit piece needs parameters. Nothing needed for now
+    
+    # # Config for n=10, m=3
+    # multiArmedBanditConfig = MultiArmedBanditConfig(
+    #     latency_scale=1e-3,
+    #     gamma = 0.5,
+    #     lat_rew_bias = 1.0,
+    #     failure_penalty = -0.5
+    # )
+
+    # Config for n=13, m=4
+    multiArmedBanditConfig = MultiArmedBanditConfig(
+        latency_scale=5e-4,
+        gamma = 0.5,
+        lat_rew_bias = 1.0,
+        failure_penalty = -3
+    )
+
     roundConfig = RoundConfig(roundsPerObservationPeriod)
     networkLatencyConfig = NetworkLatencyConfig(averageLatencyMs, latencyStdDevMs, maxLatencyMs)
     byzantineErrorConfig = ByzantineErrorConfig(consensusRoundToSetMValue, percentDropMessage, defaultConsensusValue)

@@ -19,11 +19,11 @@ class MultiArmedBanditExecutor:
         self.ni = np.zeros(self.n_arms)
         self.si = np.zeros(self.n_arms)
         self.prev_l = None
-        self.latency_scale = 1e-3
+        self.latency_scale = multiArmedBanditConfig.latency_scale # 1e-3
         self.i = 0
-        self.gamma = 0.5
-        self.lat_rew_bias = 1.0
-        self.failure_penalty = -0.5
+        self.gamma = multiArmedBanditConfig.gamma # 0.5
+        self.lat_rew_bias = multiArmedBanditConfig.lat_rew_bias # 1.0
+        self.failure_penalty = multiArmedBanditConfig.failure_penalty # -0.5
         # TODO
 
     def getNextValueOfM(self, resultsSinceLastRound):
@@ -56,7 +56,7 @@ class MultiArmedBanditExecutor:
             # TODO: change how reward is calculated to include failure penalties etc.
             rew = 0.0
             if round_failures[0].size == 0:
-                rew = (self.lat_rew_bias - avg_latency*self.latency_scale)
+                rew = (self.lat_rew_bias - min(avg_latency, 2500)*self.latency_scale)
             else:
                 rew = self.failure_penalty
             self.si[self.prev_l] += rew
@@ -77,7 +77,7 @@ class MultiArmedBanditExecutor:
         print(f'ni {self.ni}\n si {self.si}')
         print(f'Decision: {l}, m={self.mOptions[l]}\n============')
         return self.mOptions[l]
-        # return self.mOptions[1]
+        # return self.mOptions[3]
 
     def getNextValuesOfM(self, resultsSinceLastRound, minMValueMargin):
         """

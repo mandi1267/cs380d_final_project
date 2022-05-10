@@ -85,8 +85,11 @@ class MultiArmedBanditConfig:
     failures and latencies in consensus rounds.
     """
 
-    def __init__(self):
-        # TODO fill in
+    def __init__(self, **kwargs):
+        self.latency_scale = kwargs['latency_scale']
+        self.gamma = kwargs['gamma']
+        self.lat_rew_bias = kwargs['lat_rew_bias']
+        self.failure_penalty = kwargs['failure_penalty']
         pass
 
 

@@ -98,7 +98,7 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
                          color="r")
         plt.legend()
 
-    plt.show()
+    # plt.show()
 
 
 def plotChosenMValuesAgainstTrueFaultyNodes(trueFaultyNodesByRound, chosenMValuesByRound, observationPeriodStarts):
@@ -116,7 +116,7 @@ def plotChosenMValuesAgainstTrueFaultyNodes(trueFaultyNodesByRound, chosenMValue
     plt.xlabel("Round Number")
     plt.ylabel("M Value")
     plt.legend()
-    plt.show()
+    # plt.show()
 
 
 def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, observationPeriodStarts):
@@ -188,7 +188,7 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
 
     plt.title("Percent Failures per Observation and MAB Chosen M Value")
     plt.legend()
-    plt.show()
+    # plt.show()
 
 
 
@@ -293,6 +293,7 @@ if __name__ == "__main__":
         selectedMValues.append(mValForRound)
 
     # Plot true m values against selected m value
+    plt.figure()
     plotChosenMValuesAgainstTrueFaultyNodes(trueMValues, selectedMValues, observationPeriodStarts)
 
     # Plot failures (maybe with time with different y axis?) TODO (how?)
@@ -329,6 +330,7 @@ if __name__ == "__main__":
         percentFailuresByMValue[mVal] = numFailures / (numFailures + successesByMValue[mVal])
 
     # Plot the percentage of failed consensus rounds per observation period along with the chosen m value
+    plt.figure()
     plotPercentFailuresPerObservationPeriod(didFailByRound, selectedMValues, observationPeriodStarts)
 
     # Compute % of time that m value is greater than true value of m (safe)
@@ -346,4 +348,6 @@ if __name__ == "__main__":
 
     # TODO do we actually need this
     # TODO Number of observation periods to converge to ideal value -- can this be a CDF?
+
+    plt.show()
 

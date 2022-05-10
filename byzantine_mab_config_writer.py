@@ -69,7 +69,7 @@ def createConfigs():
     averageObsPeriodsToConvergence = 4  # TODO replace this
     conservativeObsPeriodsToConvergence = 2 * averageObsPeriodsToConvergence
     # numberOfTrueMs = 16  # TODO replace this
-    numberOfTrueMs = 5
+    numberOfTrueMs = 8
 
     roundForNextM = 0
     consensusRoundToSetMValue = {}

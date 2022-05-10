@@ -526,14 +526,14 @@ class NetworkNode:
 
             if (self.pendingOutgoingMessages):
                 with acquire_lock_timeout(self.outgoingMsgQueueLock, 0.5) as acquired:
-                    unhandledMessages = []
                     if (acquired):
+                        unhandledMessages = []
                         for i in range(len(self.pendingOutgoingMessages)):
                             pendingOutgoingMsg = self.pendingOutgoingMessages[i]
                             try:
                                 self.outgoingMsgQueue.put(pendingOutgoingMsg, timeout=0.5)
                             except (queue.Full):
-                                print("WARNING: Node " + str(self.nodeNum) + " unable to send messages because outgoing queue is full; sent " + str(i-1) + " messages before filling up")
+                                print("WARNING: Node " + str(self.nodeNum) + " unable to send messages because outgoing queue is full; sent " + str(i) + " messages before filling up")
                                 unhandledMessages = self.pendingOutgoingMessages[i:]
                                 break
                         self.pendingOutgoingMessages = unhandledMessages

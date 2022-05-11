@@ -95,7 +95,7 @@ def createConfigs():
         latency_scale=1e-3,
         gamma = 0.6,
         lat_rew_bias = 1.0,
-        failure_penalty = -3
+        failure_penalty = -3.0
     )
 
     # # Config for n=13, m=4
@@ -103,7 +103,7 @@ def createConfigs():
     #     latency_scale=5e-4,
     #     gamma = 0.5,
     #     lat_rew_bias = 1.0,
-    #     failure_penalty = -3
+    #     failure_penalty = -3.0
     # )
 
     roundConfig = RoundConfig(roundsPerObservationPeriod)

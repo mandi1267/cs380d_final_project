@@ -121,7 +121,7 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
     plt.xlabel("Round Number")
     plt.ylabel("Latency (ms)")
     plt.xlim(0, numConsensusRounds)
-    plt.ylim(bottom=0)
+    plt.ylim(bottom=0) # TODO add upper bound -- need to see what is reasonable
 
 
     if (conservativeMLatencies):
@@ -161,6 +161,18 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
         plt.fill_between(xVals, conservativeMLatenciesAvgOverObsPeriod - conservativeMLatenciesStdDevOverObsPeriod,
                          conservativeMLatenciesAvgOverObsPeriod + conservativeMLatenciesStdDevOverObsPeriod, alpha=0.2, color="r",
                          label="Conservative (+/- std dev)")
+
+        conservativeAvgMax = max(conservativeMLatenciesAvgOverObsPeriod)
+        chosenAvgMax = max(chosenMLatenciesAvgOverObsPeriod)
+        averageMaxDoubled = 2 * max(conservativeAvgMax, chosenAvgMax)
+
+        conservativeStdDevMax = max(conservativeMLatenciesAvgOverObsPeriod + conservativeMLatenciesStdDevOverObsPeriod)
+        chosenStdDevMax = max(chosenMLatenciesAvgOverObsPeriod + chosenMLatenciesStdDevOverObsPeriod)
+        stdDevMax = max(conservativeStdDevMax, chosenStdDevMax)
+
+        upperBoundLimit= min(stdDevMax, averageMaxDoubled)
+        plt.ylim(top=upperBoundLimit)
+
         # plt.fill_between(xVals, conservativeMLatenciesAvgByRoundNp - conservativeMLatenciesStdDevByRoundNp,
         #                  conservativeMLatenciesAvgByRoundNp + conservativeMLatenciesStdDevByRoundNp, alpha=0.4,
         #                  color="r")
@@ -176,10 +188,10 @@ def plotLatencies(chosenMLatencies, observationPeriodFirstRound, conservativeMLa
         for i in range(1, numRounds):
             cumulativeLatencySavings[i] = latencyDifferences[i] + cumulativeLatencySavings[i - 1]
 
-        plt.title("Aggregated Latency Savings")
+        plt.title("Average Latency Savings up to Round")
         plt.xlabel("Round Number")
-        plt.ylabel("Cumulative Latency Savings (ms)")
-        plt.plot(xVals, cumulativeLatencySavings)
+        plt.ylabel("Average Latency Savings (ms)")
+        plt.plot(xVals, np.divide(cumulativeLatencySavings, (1 + xVals)))
 
         plt.xlim(0, numConsensusRounds - 1)
     else:
@@ -193,8 +205,9 @@ def plotChosenMValuesAgainstTrueFaultyNodes(trueFaultyNodesByRound, chosenMValue
 
     xVals = np.array(range(numRounds))
 
-    plt.plot(xVals, np.array(chosenMValuesByRound), label="MAB M Value", color="b", alpha=0.6)
+
     plt.plot(xVals, np.array(trueFaultyNodesByRound), label="True Faulty Nodes Count", color="g", linewidth=3)
+    plt.plot(xVals, np.array(chosenMValuesByRound), label="MAB M Value", color="b")
 
     # for obsPeriodStart in observationPeriodStarts:
     #     plt.axvline(obsPeriodStart, alpha=0.2)
@@ -263,6 +276,8 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
     ax1.plot(xVals, np.array(obsPeriodFailure), color='b', label="Percent Failures")
     ax1.tick_params(axis='y', labelcolor='b')
 
+    plt.ylim(0, 100)
+
     ax2 = ax1.twinx()
 
     ax2.set_ylabel("MAB M Value", color='r')
@@ -275,6 +290,7 @@ def plotPercentFailuresPerObservationPeriod(didFailByRound, mValueByRound, obser
     #     plt.axvline(obsPeriodStart, alpha=0.2)
 
     plt.xlim(0, numRounds)
+    plt.ylim(0, max(mValueByRound))
     plt.title("Percent Failures by Observation Period and MAB M Value")
     # plt.legend()
     # plt.show()
